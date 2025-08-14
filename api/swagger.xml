@@ -1,0 +1,345 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<openapi>
+  <info>
+    <title>zaimu API</title>
+    <version>1.0.0</version>
+    <description>API for zaimu, a financial learning support web application.</description>
+  </info>
+  <servers>
+    <server>
+      <url>http://localhost:3000/api</url>
+    </server>
+  </servers>
+  <paths>
+    <!-- User Authentication -->
+    <path name="/auth/register">
+      <post>
+        <summary>Register a new user</summary>
+        <requestBody>
+          <required>true</required>
+          <content>
+            <application_json>
+              <schema>
+                <type>object</type>
+                <properties>
+                  <username>
+                    <type>string</type>
+                  </username>
+                  <password>
+                    <type>string</type>
+                  </password>
+                  <role>
+                    <type>string</type>
+                    <enum>
+                      <item>teacher</item>
+                      <item>student</item>
+                    </enum>
+                  </role>
+                </properties>
+              </schema>
+            </application_json>
+          </content>
+        </requestBody>
+        <responses>
+          <_201>
+            <description>User registered successfully</description>
+          </_201>
+        </responses>
+      </post>
+    </path>
+    <path name="/auth/login">
+      <post>
+        <summary>Login a user</summary>
+        <requestBody>
+          <required>true</required>
+          <content>
+            <application_json>
+              <schema>
+                <type>object</type>
+                <properties>
+                  <username>
+                    <type>string</type>
+                  </username>
+                  <password>
+                    <type>string</type>
+                  </password>
+                </properties>
+              </schema>
+            </application_json>
+          </content>
+        </requestBody>
+        <responses>
+          <_200>
+            <description>Login successful</description>
+            <content>
+              <application_json>
+                <schema>
+                  <type>object</type>
+                  <properties>
+                    <token>
+                      <type>string</type>
+                    </token>
+                  </properties>
+                </schema>
+              </application_json>
+            </content>
+          </_200>
+        </responses>
+      </post>
+    </path>
+
+    <!-- Transactions -->
+    <path name="/transactions">
+      <post>
+        <summary>Create a new transaction</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <requestBody>
+          <required>true</required>
+          <content>
+            <application_json>
+              <schema>
+                <type>object</type>
+                <properties>
+                  <date>
+                    <type>string</type>
+                    <format>date</format>
+                  </date>
+                  <account>
+                    <type>string</type>
+                  </account>
+                  <amount>
+                    <type>number</type>
+                  </amount>
+                  <description>
+                    <type>string</type>
+                  </description>
+                </properties>
+              </schema>
+            </application_json>
+          </content>
+        </requestBody>
+        <responses>
+          <_201>
+            <description>Transaction created successfully</description>
+          </_201>
+        </responses>
+      </post>
+      <get>
+        <summary>Get all transactions</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <responses>
+          <_200>
+            <description>A list of transactions</description>
+            <content>
+              <application_json>
+                <schema>
+                  <type>array</type>
+                  <items>
+                    <ref>#/components/schemas/Transaction</ref>
+                  </items>
+                </schema>
+              </application_json>
+            </content>
+          </_200>
+        </responses>
+      </get>
+    </path>
+    <path name="/transactions/{id}">
+      <put>
+        <summary>Update a transaction</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <parameters>
+          <parameter>
+            <name>id</name>
+            <in>path</in>
+            <required>true</required>
+            <schema>
+              <type>integer</type>
+            </schema>
+          </parameter>
+        </parameters>
+        <requestBody>
+          <required>true</required>
+          <content>
+            <application_json>
+              <schema>
+                <ref>#/components/schemas/Transaction</ref>
+              </schema>
+            </application_json>
+          </content>
+        </requestBody>
+        <responses>
+          <_200>
+            <description>Transaction updated successfully</description>
+          </_200>
+        </responses>
+      </put>
+      <delete>
+        <summary>Delete a transaction</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <parameters>
+          <parameter>
+            <name>id</name>
+            <in>path</in>
+            <required>true</required>
+            <schema>
+              <type>integer</type>
+            </schema>
+          </parameter>
+        </parameters>
+        <responses>
+          <_204>
+            <description>Transaction deleted successfully</description>
+          </_204>
+        </responses>
+      </delete>
+    </path>
+
+    <!-- Financial Statements -->
+    <path name="/financials/balance-sheet">
+      <get>
+        <summary>Get the Balance Sheet</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <responses>
+          <_200>
+            <description>Balance Sheet data</description>
+            <content>
+              <application_json>
+                <schema>
+                  <ref>#/components/schemas/BalanceSheet</ref>
+                </schema>
+              </application_json>
+            </content>
+          </_200>
+        </responses>
+      </get>
+    </path>
+    <path name="/financials/income-statement">
+      <get>
+        <summary>Get the Income Statement</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <responses>
+          <_200>
+            <description>Income Statement data</description>
+            <content>
+              <application_json>
+                <schema>
+                  <ref>#/components/schemas/IncomeStatement</ref>
+                </schema>
+              </application_json>
+            </content>
+          </_200>
+        </responses>
+      </get>
+    </path>
+    <path name="/financials/cash-flow">
+      <get>
+        <summary>Get the Cash Flow Statement</summary>
+        <security>
+          <bearerAuth/>
+        </security>
+        <responses>
+          <_200>
+            <description>Cash Flow Statement data</description>
+            <content>
+              <application_json>
+                <schema>
+                  <ref>#/components/schemas/CashFlowStatement</ref>
+                </schema>
+              </application_json>
+            </content>
+          </_200>
+        </responses>
+      </get>
+    </path>
+  </paths>
+  <components>
+    <schemas>
+      <Transaction>
+        <type>object</type>
+        <properties>
+          <id>
+            <type>integer</type>
+          </id>
+          <date>
+            <type>string</type>
+            <format>date</format>
+          </date>
+          <account>
+            <type>string</type>
+          </account>
+          <amount>
+            <type>number</type>
+          </amount>
+          <description>
+            <type>string</type>
+          </description>
+          <userId>
+            <type>integer</type>
+          </userId>
+        </properties>
+      </Transaction>
+      <BalanceSheet>
+        <type>object</type>
+        <properties>
+          <assets>
+            <type>object</type>
+          </assets>
+          <liabilities>
+            <type>object</type>
+          </liabilities>
+          <equity>
+            <type>object</type>
+          </equity>
+        </properties>
+      </BalanceSheet>
+      <IncomeStatement>
+        <type>object</type>
+        <properties>
+          <revenue>
+            <type>number</type>
+          </revenue>
+          <expenses>
+            <type>number</type>
+          </expenses>
+          <netIncome>
+            <type>number</type>
+          </netIncome>
+        </properties>
+      </IncomeStatement>
+      <CashFlowStatement>
+        <type>object</type>
+        <properties>
+          <operating>
+            <type>number</type>
+          </operating>
+          <investing>
+            <type>number</type>
+          </investing>
+          <financing>
+            <type>number</type>
+          </financing>
+        </properties>
+      </CashFlowStatement>
+    </schemas>
+    <securitySchemes>
+      <bearerAuth>
+        <type>http</type>
+        <scheme>bearer</scheme>
+      </bearerAuth>
+    </securitySchemes>
+  </components>
+</openapi>
+
