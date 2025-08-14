@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
-import { Transaction, BalanceSheet, IncomeStatement, CashFlowStatement, Account, SimpleTransaction, TransactionTemplate } from '../types';
+import  { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
+import type { Transaction, BalanceSheet, IncomeStatement, CashFlowStatement, Account, SimpleTransaction, TransactionTemplate } from '../types';
 
 interface TransactionContextType {
   transactions: Transaction[];

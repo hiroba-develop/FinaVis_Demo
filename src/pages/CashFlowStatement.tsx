@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
-import { CashFlowStatement as CashFlowStatementType } from '../types';
+import type { CashFlowStatement} from '../types';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 // --- Reusable Components ---
@@ -136,7 +136,7 @@ const CashFlowStatement: React.FC = () => {
               <Tooltip content={<CustomTooltip />} />
               <Bar dataKey="value">
                 {waterfallData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={colors[entry.type]} />
+                  <Cell key={`cell-${index}`} fill={colors[entry.type as keyof typeof colors]} />
                 ))}
               </Bar>
             </BarChart>

@@ -70,7 +70,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
 };
 
 const IncomeStatement: React.FC = () => {
-  const { incomeStatement, transactions, addTransaction, accountsMaster } = useTransactions();
+  const { incomeStatement } = useTransactions();
   const navigate = useNavigate();
 
   // --- Calculations for Income Statement ---
@@ -84,14 +84,14 @@ const IncomeStatement: React.FC = () => {
   const preTaxIncome = operatingIncome; // Simplified assumption for this app
   const finalNetIncome = incomeStatement.当期純利益; // Sourced directly from context
 
-  const taxAccountId = 13;
-  const accruedTaxAccountId = 14;
-  const retainedEarningsAccountId = 15;
+  //const taxAccountId = 13;
+  //const accruedTaxAccountId = 14;
+  //const retainedEarningsAccountId = 15;
 
-  const isTaxPosted = totalTax > 0;
-  const isClosed = transactions.some(tx => tx.description === '決算整理仕訳（損益振替）');
+  //const isTaxPosted = totalTax > 0;
+  //const isClosed = transactions.some(tx => tx.description === '決算整理仕訳（損益振替）');
 
-  const handlePostTax = () => {
+  /*const handlePostTax = () => {
     if (isTaxPosted) {
         alert("納税額は既に計上済みです。");
         return;
@@ -109,7 +109,7 @@ const IncomeStatement: React.FC = () => {
     alert('納税額を費用として計上しました。');
   };
 
-  const handleClosingEntry = () => {
+ /* const handleClosingEntry = () => {
     if (isClosed) {
       alert("既に決算整理は完了しています。");
       return;
@@ -157,7 +157,7 @@ const IncomeStatement: React.FC = () => {
     addTransaction(closingTransaction);
     alert('決算整理仕訳が作成され、利益が確定しました。');
   };
-
+*/
   // --- Waterfall Chart Data for Income Statement ---
   const plWaterfallData = [];
   let plRunningTotal = 0;
@@ -254,7 +254,7 @@ const IncomeStatement: React.FC = () => {
                                 <Tooltip content={<CustomTooltip />} />
                                 <Bar dataKey="value">
                                     {plWaterfallData.map((entry, index) => (
-                                    <Cell key={`cell-${index}`} fill={plColors[entry.type]} />
+                                    <Cell key={`cell-${index}`} fill={plColors[entry.type as keyof typeof plColors]} />
                                     ))}
                                 </Bar>
                             </BarChart>

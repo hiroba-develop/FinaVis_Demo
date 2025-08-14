@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
-import { Transaction, JournalEntry } from '../types';
+import type { Transaction} from '../types';
 
 interface JournalEntryForm {
     accountId: number | '';

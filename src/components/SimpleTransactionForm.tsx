@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useTransactions } from '../contexts/TransactionContext';
-import { SimpleTransaction } from '../types';
+import type { SimpleTransaction } from '../types';
 
 const SimpleTransactionForm: React.FC = () => {
   const { addSimpleTransaction, transactionTemplates, accountsMaster } = useTransactions();

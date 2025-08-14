@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
-import { JournalEntry } from '../types';
+import type { JournalEntry } from '../types';
 
 const TransactionHistory: React.FC = () => {
   const { transactions, accountsMaster } = useTransactions();
@@ -95,7 +95,7 @@ const TransactionHistory: React.FC = () => {
         {/* --- Mobile View --- */}
         <div className="md:hidden space-y-4">
             {transactions.map(tx => {
-                const { debitAccount, creditAccount, amount } = getSimpleEntryInfo(tx.entries);
+                const { debitAccount, creditAccount} = getSimpleEntryInfo(tx.entries);
                 return (
                     <div key={tx.transactionId} className="bg-gray-50 border border-gray-200 rounded-lg">
                         <div onClick={() => handleRowClick(tx.transactionId)} className="p-4 cursor-pointer">

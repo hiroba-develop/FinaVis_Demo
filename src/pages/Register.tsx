@@ -1,6 +1,6 @@
-import { useState, FormEvent } from "react";
+import { useState, type FormEvent } from "react";
 import { useNavigate, Link } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
+//import { useAuth } from "../contexts/AuthContext";
 import FinaVisLogo from "/FinaVis_logo_login.png";
 
 const Register = () => {
