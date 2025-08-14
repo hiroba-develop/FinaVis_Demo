@@ -49,6 +49,9 @@ const TransactionHistory: React.FC = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">借方</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">貸方</th>
                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">金額</th>
+                    <th className="relative px-6 py-3">
+                        <span className="sr-only">編集</span>
+                    </th>
                 </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
@@ -62,10 +65,15 @@ const TransactionHistory: React.FC = () => {
                             <td className="px-6 py-4 whitespace-nowrap">{debitAccount}</td>
                             <td className="px-6 py-4 whitespace-nowrap">{creditAccount}</td>
                             <td className="px-6 py-4 whitespace-nowrap text-right font-mono">{amount.toLocaleString()}</td>
+                            <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <Link to={`/edit-transaction/${tx.transactionId}`} className="text-accent hover:text-accent-dark">
+                                    編集
+                                </Link>
+                            </td>
                         </tr>
                         {openTxId === tx.transactionId && (
                             <tr className="bg-gray-100">
-                                <td colSpan={5} className="p-4">
+                                <td colSpan={6} className="p-4">
                                     {/* (Existing detail view can be used here) */}
                                     <div className="p-4 bg-white rounded-md shadow-inner">
                                         <h4 className="font-bold mb-2 text-accent">仕訳詳細</h4>

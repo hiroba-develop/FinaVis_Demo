@@ -3,6 +3,9 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    font-size: 90%;
+  }
   body {
     @apply bg-background text-text;
     font-family: "Noto Sans JP", sans-serif;
