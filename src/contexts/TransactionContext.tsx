@@ -309,16 +309,20 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     cf.operatingActivities = operatingActivities;
     cf.investingActivities = investingActivities;
     cf.financingActivities = financingActivities;
-    cf.netCashFlow = operatingActivities + investingActivities + financingActivities;
     
-    // Ensure consistency with the Balance Sheet
-    const endingCash = bs.assets.流動資産['現金'] || 0;
-    cf.endingCashBalance = endingCash;
-    // Assuming beginning balance is from the initial state, as we don't have historical periods
+    // Calculate net cash flow from the sum of activities
+    const calculatedNetCashFlow = operatingActivities + investingActivities + financingActivities;
+    cf.netCashFlow = calculatedNetCashFlow;
+    
+    // Calculate ending balance based on flow, not B/S override
     cf.beginningCashBalance = initialCashFlowStatement.beginningCashBalance;
-    // The net flow should align, but B/S is the source of truth for the ending balance.
-    cf.netCashFlow = endingCash - cf.beginningCashBalance;
+    cf.endingCashBalance = cf.beginningCashBalance + calculatedNetCashFlow;
 
+    // Optional: Log a warning if B/S cash doesn't match C/F calculation
+    const endingCashOnBS = bs.assets.流動資産['現金'] || 0;
+    if (cf.endingCashBalance !== endingCashOnBS) {
+        console.warn(`C/F ending balance (${cf.endingCashBalance}) does not match B/S cash (${endingCashOnBS}). This might indicate a transaction classification issue.`);
+    }
 
     setBalanceSheet(bs);
     setIncomeStatement(is);

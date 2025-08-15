@@ -106,12 +106,12 @@ const BalanceSheet: React.FC = () => {
                 {/* 資産の部 */}
                 <div className="space-y-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-center text-accent border-b-2 border-accent pb-3">資産の部</h2>
-                    <Section title="流動資産" amount={totalCurrentAssets} color="border-cyan-500" tooltip="1年以内に現金化される資産。会社の短期的な支払い能力を表します">
+                    <Section title="流動資産" amount={totalCurrentAssets} color="border-sky-500" tooltip="1年以内に現金化される資産。会社の短期的な支払い能力を表します">
                         {Object.entries(balanceSheet.assets.流動資産).map(([key, value]) => (
                            <AccountRow key={key} name={key} value={value} />
                         ))}
                     </Section>
-                    <Section title="固定資産" amount={totalFixedAssets} color="border-sky-700" tooltip="1年を超えて使用する資産。事業運営の基盤となる資産です">
+                    <Section title="固定資産" amount={totalFixedAssets} color="border-blue-800" tooltip="1年を超えて使用する資産。事業運営の基盤となる資産です">
                          {Object.entries(balanceSheet.assets.固定資産).map(([key, value]) => (
                            <AccountRow key={key} name={key} value={value} />
                         ))}
@@ -125,12 +125,12 @@ const BalanceSheet: React.FC = () => {
                 {/* 負債・純資産の部 */}
                 <div className="space-y-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-center text-accent border-b-2 border-accent pb-3">負債・純資産の部</h2>
-                    <Section title="流動負債" amount={totalCurrentLiabilities} color="border-amber-500" tooltip="1年以内に支払う義務がある負債。短期的な支払い責任です">
+                    <Section title="流動負債" amount={totalCurrentLiabilities} color="border-orange-400" tooltip="1年以内に支払う義務がある負債。短期的な支払い責任です">
                         {Object.entries(balanceSheet.liabilities.流動負債).map(([key, value]) => (
                             <AccountRow key={key} name={key} value={value} />
                         ))}
                     </Section>
-                    <Section title="固定負債" amount={totalFixedLiabilities} color="border-orange-700" tooltip="1年を超えて返済する負債。長期的な支払い責任です">
+                    <Section title="固定負債" amount={totalFixedLiabilities} color="border-red-600" tooltip="1年を超えて返済する負債。長期的な支払い責任です">
                         {Object.entries(balanceSheet.liabilities.固定負債).map(([key, value]) => (
                             <AccountRow key={key} name={key} value={value} />
                         ))}
@@ -140,7 +140,7 @@ const BalanceSheet: React.FC = () => {
                         <span>{balanceSheet.liabilities.負債合計.toLocaleString()}</span>
                     </div>
 
-                    <Section title="純資産" amount={balanceSheet.equity.純資産合計} color="border-teal-500" tooltip="資産から負債を引いた差額。株主に帰属する会社の正味財産です">
+                    <Section title="純資産" amount={balanceSheet.equity.純資産合計} color="border-emerald-600" tooltip="資産から負債を引いた差額。株主に帰属する会社の正味財産です">
                          <AccountRow name="資本金" value={balanceSheet.equity.資本金} />
                          <AccountRow name="利益剰余金" value={balanceSheet.equity.利益剰余金} />
                     </Section>
@@ -154,24 +154,24 @@ const BalanceSheet: React.FC = () => {
         </div>
 
       <div className="relative bg-gray-50 rounded-xl shadow-lg p-4 md:p-8 mt-10">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">B/Sボックス図</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2 text-center">B/Sボックス図</h2>
+        <p className="text-center text-sm text-gray-500 mb-6">（各項目の総資産に対する割合）</p>
         
-        {/* We apply overflow-visible to the columns to allow tooltips to escape */}
-        <div className="w-full max-w-4xl mx-auto flex" style={{ height: '400px' }}>
+        <div className="w-full max-w-5xl mx-auto flex flex-row items-center" style={{ minHeight: '450px' }}>
             {/* Assets Side */}
-            <div className="w-1/2 flex flex-col overflow-visible">
-                <ChartBox label="流動資産" amount={totalCurrentAssets} percentage={perc(totalCurrentAssets)} color="bg-cyan-500" />
-                <ChartBox label="固定資産" amount={totalFixedAssets} percentage={perc(totalFixedAssets)} color="bg-sky-700" />
+            <div className="w-1/2 flex flex-col h-full" style={{ height: '400px' }}>
+                <ChartBox label="流動資産" amount={totalCurrentAssets} percentage={perc(totalCurrentAssets)} color="bg-sky-500" />
+                <ChartBox label="固定資産" amount={totalFixedAssets} percentage={perc(totalFixedAssets)} color="bg-blue-800" />
             </div>
-            
+
             {/* Liabilities & Equity Side */}
-            <div className="w-1/2 flex flex-col overflow-visible">
-                <ChartBox label="流動負債" amount={totalCurrentLiabilities} percentage={perc(totalCurrentLiabilities)} color="bg-amber-500" />
-                <ChartBox label="固定負債" amount={totalFixedLiabilities} percentage={perc(totalFixedLiabilities)} color="bg-orange-700" />
-                <ChartBox label="純資産" amount={balanceSheet.equity.純資産合計} percentage={perc(balanceSheet.equity.純資産合計)} color="bg-teal-600" />
+            <div className="w-1/2 flex flex-col" style={{ height: '400px' }}>
+                <ChartBox label="流動負債" amount={totalCurrentLiabilities} percentage={perc(totalCurrentLiabilities)} color="bg-orange-400" />
+                <ChartBox label="固定負債" amount={totalFixedLiabilities} percentage={perc(totalFixedLiabilities)} color="bg-red-600" />
+                <ChartBox label="純資産" amount={balanceSheet.equity.純資産合計} percentage={perc(balanceSheet.equity.純資産合計)} color="bg-emerald-600" />
             </div>
         </div>
-        <div className="flex w-full max-w-4xl mx-auto text-center mt-2 text-sm sm:text-base">
+        <div className="flex flex-row w-full max-w-5xl mx-auto text-center mt-2 text-sm sm:text-base">
             <div className="w-1/2 font-bold text-gray-700 p-2 border-t-2">資産合計: {totalAssets.toLocaleString()}</div>
             <div className="w-1/2 font-bold text-gray-700 p-2 border-t-2">負債・純資産合計: {(balanceSheet.liabilities.負債合計 + balanceSheet.equity.純資産合計).toLocaleString()}</div>
         </div>
