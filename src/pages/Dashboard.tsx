@@ -144,6 +144,11 @@ const Dashboard: React.FC = () => {
                     </div>
                     {isClosed && <p className="text-xs text-center text-slate-500 mt-2">（決算整理により利益が確定しました）</p>}
                 </div>
+                 <div className="mt-6 text-center">
+                    <span className="inline-block bg-accent text-white font-semibold px-6 py-2 rounded-full group-hover:bg-accent-dark transition-colors">
+                        詳細を見る
+                    </span>
+                </div>
             </Link>
         </div>
 
@@ -184,6 +189,11 @@ const Dashboard: React.FC = () => {
                         )}
                     </div>
                 </div>
+                <div className="mt-6 text-center">
+                    <span className="inline-block bg-accent text-white font-semibold px-6 py-2 rounded-full group-hover:bg-accent-dark transition-colors">
+                        詳細を見る
+                    </span>
+                </div>
             </Link>
 
             {/* 3. Cash Flow Statement Card */}
@@ -200,6 +210,11 @@ const Dashboard: React.FC = () => {
                         </div>
                         <span className={isExplanationOpen ? 'text-teal-700' : ''}>{cashFlowStatement.endingCashBalance.toLocaleString()}円</span>
                     </div>
+                </div>
+                 <div className="mt-6 text-center">
+                    <span className="inline-block bg-accent text-white font-semibold px-6 py-2 rounded-full hover:bg-accent-dark transition-colors">
+                        詳細を見る
+                    </span>
                 </div>
             </Link>
         </div>
