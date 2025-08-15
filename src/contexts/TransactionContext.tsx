@@ -23,7 +23,16 @@ const initialBalanceSheet: BalanceSheet = {
 };
 const initialIncomeStatement: IncomeStatement = {
     収益: {},
-    費用: { 売上原価: {}, 販売費及び一般管理費: {}, 法人税等: {}, 費用合計: 0 },
+    費用: { 
+        売上原価: {}, 
+        販売費及び一般管理費: {}, 
+        営業外費用: {}, 
+        特別損失: {}, 
+        法人税等: {}, 
+        費用合計: 0 
+    },
+    営業外収益: {},
+    特別利益: {},
     当期純利益: 0,
 };
 const initialCashFlowStatement: CashFlowStatement = {
@@ -107,6 +116,48 @@ const sampleTransactions: Transaction[] = [
       { entryId: 14, transactionId: 7, accountId: 4, debitAmount: 0, creditAmount: 50000 }, // 買掛金
     ],
   },
+  {
+    transactionId: 8,
+    userId: 1,
+    transactionDate: '2023-06-01',
+    description: '受取利息1,000円を現金で受け取った',
+    entries: [
+      { entryId: 15, transactionId: 8, accountId: 1, debitAmount: 1000, creditAmount: 0 },
+      { entryId: 16, transactionId: 8, accountId: 16, debitAmount: 0, creditAmount: 1000 },
+    ],
+  },
+  {
+    transactionId: 9,
+    userId: 1,
+    transactionDate: '2023-06-05',
+    description: '支払利息2,000円を現金で支払った',
+    entries: [
+      { entryId: 17, transactionId: 9, accountId: 12, debitAmount: 2000, creditAmount: 0 },
+      { entryId: 18, transactionId: 9, accountId: 1, debitAmount: 0, creditAmount: 2000 },
+    ],
+  },
+  {
+    transactionId: 10,
+    userId: 1,
+    transactionDate: '2023-06-10',
+    description: '使用していた備品（取得価額50,000円）を売却し、現金60,000円を受け取った',
+    entries: [
+      // This is a simplified entry for demonstration
+      { entryId: 19, transactionId: 10, accountId: 1, debitAmount: 60000, creditAmount: 0 },
+      { entryId: 20, transactionId: 10, accountId: 10, debitAmount: 0, creditAmount: 50000 }, // Assuming book value is 50,000
+      { entryId: 21, transactionId: 10, accountId: 17, debitAmount: 0, creditAmount: 10000 }, // Gain on sale
+    ],
+  },
+    {
+    transactionId: 11,
+    userId: 1,
+    transactionDate: '2023-06-15',
+    description: '災害により倉庫が一部損壊し、15,000円の損失を計上した',
+    entries: [
+      { entryId: 22, transactionId: 11, accountId: 18, debitAmount: 15000, creditAmount: 0 },
+      { entryId: 23, transactionId: 11, accountId: 10, debitAmount: 0, creditAmount: 15000 }, // Assuming asset value decrease
+    ],
+  },
 ];
 
 // 仮の勘定科目マスタ
@@ -123,9 +174,12 @@ const accountsMaster: Account[] = [
   { id: 9, name: '給料', type: 'expense', sub_type: 'sga' },
   { id: 10, name: '備品', type: 'asset', sub_type: 'fixed' },
   { id: 11, name: '消耗品費', type: 'expense', sub_type: 'sga' },
-  { id: 12, name: '支払利息', type: 'expense', sub_type: 'sga' },
+  { id: 12, name: '支払利息', type: 'expense', sub_type: 'non-operating-expense' },
   { id: 13, name: '法人税等', type: 'expense', sub_type: 'tax' },
   { id: 14, name: '未払法人税等', type: 'liability', sub_type: 'current' },
+  { id: 16, name: '受取利息', type: 'revenue', sub_type: 'non-operating-revenue' },
+  { id: 17, name: '固定資産売却益', type: 'revenue', sub_type: 'extraordinary-profit' },
+  { id: 18, name: '災害損失', type: 'expense', sub_type: 'extraordinary-loss' },
 ];
 
 const transactionTemplates: TransactionTemplate[] = [
@@ -177,11 +231,15 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
             }
             break;
           case 'revenue':
-            is.収益[account.name] = (is.収益[account.name] || 0) - amount;
+            if (account.sub_type === 'non-operating-revenue') is.営業外収益[account.name] = (is.営業外収益[account.name] || 0) - amount;
+            else if (account.sub_type === 'extraordinary-profit') is.特別利益[account.name] = (is.特別利益[account.name] || 0) - amount;
+            else is.収益[account.name] = (is.収益[account.name] || 0) - amount;
             break;
           case 'expense':
             if (account.sub_type === 'cogs') is.費用.売上原価[account.name] = (is.費用.売上原価[account.name] || 0) + amount;
             else if (account.sub_type === 'sga') is.費用.販売費及び一般管理費[account.name] = (is.費用.販売費及び一般管理費[account.name] || 0) + amount;
+            else if (account.sub_type === 'non-operating-expense') is.費用.営業外費用[account.name] = (is.費用.営業外費用[account.name] || 0) + amount;
+            else if (account.sub_type === 'extraordinary-loss') is.費用.特別損失[account.name] = (is.費用.特別損失[account.name] || 0) + amount;
             else if (account.sub_type === 'tax') is.費用.法人税等[account.name] = (is.費用.法人税等[account.name] || 0) + amount;
             break;
         }
@@ -191,10 +249,14 @@ export const TransactionProvider = ({ children }: { children: ReactNode }) => {
     const totalRevenue = Object.values(is.収益).reduce((s, v) => s + v, 0);
     const totalCOGS = Object.values(is.費用.売上原価).reduce((s, v) => s + v, 0);
     const totalSGA = Object.values(is.費用.販売費及び一般管理費).reduce((s, v) => s + v, 0);
+    const totalNonOperatingExpenses = Object.values(is.費用.営業外費用).reduce((s, v) => s + v, 0);
+    const totalExtraordinaryLosses = Object.values(is.費用.特別損失).reduce((s, v) => s + v, 0);
     const totalTax = Object.values(is.費用.法人税等).reduce((s, v) => s + v, 0);
+    const totalNonOperatingRevenue = Object.values(is.営業外収益).reduce((s, v) => s + v, 0);
+    const totalExtraordinaryProfit = Object.values(is.特別利益).reduce((s, v) => s + v, 0);
     
-    is.費用.費用合計 = totalCOGS + totalSGA + totalTax;
-    is.当期純利益 = totalRevenue - is.費用.費用合計;
+    is.費用.費用合計 = totalCOGS + totalSGA + totalNonOperatingExpenses + totalExtraordinaryLosses + totalTax;
+    is.当期純利益 = totalRevenue + totalNonOperatingRevenue + totalExtraordinaryProfit - (totalCOGS + totalSGA + totalNonOperatingExpenses + totalExtraordinaryLosses + totalTax);
     
     // Recalculate equity based on accumulated values
     bs.assets.資産合計 = Object.values(bs.assets.流動資産).reduce((s, v) => s + v, 0) + Object.values(bs.assets.固定資産).reduce((s, v) => s + v, 0);

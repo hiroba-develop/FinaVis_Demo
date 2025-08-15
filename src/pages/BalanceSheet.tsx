@@ -2,22 +2,40 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 
-const Section: React.FC<{ title: string; amount: number; color: string; children: React.ReactNode }> = ({ title, amount, color, children }) => (
+const TooltipIcon: React.FC<{ text: string }> = ({ text }) => (
+    <span className="group relative ml-2 flex items-center justify-center">
+        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-400 text-white text-xs font-bold cursor-pointer">
+            ?
+        </div>
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 text-sm text-white bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+            {text}
+            <svg className="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xmlSpace="preserve">
+                <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
+            </svg>
+        </span>
+    </span>
+);
+
+// 貸借対照表の勘定科目行コンポーネント
+const AccountRow: React.FC<{ name: string; value: number }> = ({ name, value }) => (
+    <div className="flex justify-between text-gray-600">
+        <span>{name}</span>
+        <span>{value < 0 ? `▲ ${Math.abs(value).toLocaleString()}` : value.toLocaleString()}</span>
+    </div>
+);
+
+const Section: React.FC<{ title: string; amount: number; color: string; children: React.ReactNode; tooltip?: string; }> = ({ title, amount, color, children, tooltip }) => (
   <div className={`rounded-lg shadow-md p-4 mb-6 bg-white border-l-4 ${color}`}>
     <div className="flex justify-between items-center mb-3">
-      <h3 className="font-bold text-lg text-gray-700">{title}</h3>
+      <h3 className="font-bold text-lg text-gray-700 flex items-center">
+        {title}
+        {tooltip && <TooltipIcon text={tooltip} />}
+      </h3>
       <span className="font-bold text-lg text-gray-800">{amount.toLocaleString()}</span>
     </div>
     <div className="pl-4 space-y-2">
       {children}
     </div>
-  </div>
-);
-
-const AccountRow: React.FC<{ name: string; value: number }> = ({ name, value }) => (
-  <div className="flex justify-between text-gray-600">
-    <span>{name}</span>
-    <span>{value.toLocaleString()}</span>
   </div>
 );
 
@@ -88,12 +106,12 @@ const BalanceSheet: React.FC = () => {
                 {/* 資産の部 */}
                 <div className="space-y-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-center text-accent border-b-2 border-accent pb-3">資産の部</h2>
-                    <Section title="流動資産" amount={totalCurrentAssets} color="border-cyan-500">
+                    <Section title="流動資産" amount={totalCurrentAssets} color="border-cyan-500" tooltip="1年以内に現金化される資産。会社の短期的な支払い能力を表します">
                         {Object.entries(balanceSheet.assets.流動資産).map(([key, value]) => (
                            <AccountRow key={key} name={key} value={value} />
                         ))}
                     </Section>
-                    <Section title="固定資産" amount={totalFixedAssets} color="border-sky-700">
+                    <Section title="固定資産" amount={totalFixedAssets} color="border-sky-700" tooltip="1年を超えて使用する資産。事業運営の基盤となる資産です">
                          {Object.entries(balanceSheet.assets.固定資産).map(([key, value]) => (
                            <AccountRow key={key} name={key} value={value} />
                         ))}
@@ -107,12 +125,12 @@ const BalanceSheet: React.FC = () => {
                 {/* 負債・純資産の部 */}
                 <div className="space-y-6">
                     <h2 className="text-xl sm:text-2xl font-semibold text-center text-accent border-b-2 border-accent pb-3">負債・純資産の部</h2>
-                    <Section title="流動負債" amount={totalCurrentLiabilities} color="border-amber-500">
+                    <Section title="流動負債" amount={totalCurrentLiabilities} color="border-amber-500" tooltip="1年以内に支払う義務がある負債。短期的な支払い責任です">
                         {Object.entries(balanceSheet.liabilities.流動負債).map(([key, value]) => (
                             <AccountRow key={key} name={key} value={value} />
                         ))}
                     </Section>
-                    <Section title="固定負債" amount={totalFixedLiabilities} color="border-orange-700">
+                    <Section title="固定負債" amount={totalFixedLiabilities} color="border-orange-700" tooltip="1年を超えて返済する負債。長期的な支払い責任です">
                         {Object.entries(balanceSheet.liabilities.固定負債).map(([key, value]) => (
                             <AccountRow key={key} name={key} value={value} />
                         ))}
@@ -122,7 +140,7 @@ const BalanceSheet: React.FC = () => {
                         <span>{balanceSheet.liabilities.負債合計.toLocaleString()}</span>
                     </div>
 
-                    <Section title="純資産" amount={balanceSheet.equity.純資産合計} color="border-teal-500">
+                    <Section title="純資産" amount={balanceSheet.equity.純資産合計} color="border-teal-500" tooltip="資産から負債を引いた差額。株主に帰属する会社の正味財産です">
                          <AccountRow name="資本金" value={balanceSheet.equity.資本金} />
                          <AccountRow name="利益剰余金" value={balanceSheet.equity.利益剰余金} />
                     </Section>

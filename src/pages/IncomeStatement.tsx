@@ -1,11 +1,22 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
-// --- Reusable Components (assuming they are defined as in previous steps) ---
-// Note: For brevity, component definitions (ReportRow, ReportBlock, ResultBox) are omitted.
-// They should be present here as defined in the previous modification of this file.
+const TooltipIcon: React.FC<{ text: string }> = ({ text }) => (
+    <span className="group relative ml-2 flex items-center justify-center">
+        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-400 text-white text-xs font-bold cursor-pointer">
+            ?
+        </div>
+        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 text-sm text-white bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
+            {text}
+            <svg className="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xmlSpace="preserve">
+                <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
+            </svg>
+        </span>
+    </span>
+);
+
 interface ReportRowProps {
   label: string;
   amount: number | string;
@@ -14,7 +25,7 @@ interface ReportRowProps {
 }
 
 const ReportRow: React.FC<ReportRowProps> = ({ label, amount, isSub = false, isTotal = false }) => (
-  <div className={`flex justify-between py-2 ${isSub ? 'pl-8' : ''} ${isTotal ? 'font-bold border-t' : ''}`}>
+  <div className={`flex justify-between py-1 ${isSub ? 'pl-8' : ''} ${isTotal ? 'font-bold border-t' : ''}`}>
     <span>{label}</span>
     <span>{typeof amount === 'number' ? amount.toLocaleString() : amount}</span>
   </div>
@@ -24,12 +35,16 @@ interface ReportBlockProps {
   title: string;
   children: React.ReactNode;
   color?: string;
+  tooltip?: string;
 }
 
-const ReportBlock: React.FC<ReportBlockProps> = ({ title, children, color = 'bg-gray-100' }) => (
-  <div className={`rounded-lg shadow-sm mb-6 ${color}`}>
-    <h3 className="font-semibold text-lg p-3 bg-gray-200 bg-opacity-50 rounded-t-lg">{title}</h3>
-    <div className="p-4">
+const ReportBlock: React.FC<ReportBlockProps> = ({ title, children, color = 'bg-white', tooltip }) => (
+    <div className={`rounded-lg shadow-sm mb-3 border border-gray-200 ${color}`}>
+        <h3 className="font-semibold text-lg p-2 bg-gray-50 border-b border-gray-200 rounded-t-lg flex items-center">
+            {title}
+            {tooltip && <TooltipIcon text={tooltip} />}
+        </h3>
+        <div className="p-3">
       {children}
     </div>
   </div>
@@ -39,11 +54,15 @@ interface ResultBoxProps {
     label: string;
     amount: number;
     color: string;
+    tooltip?: string;
 }
-const ResultBox: React.FC<ResultBoxProps> = ({ label, amount, color }) => (
-    <div className={`p-4 rounded-lg shadow-md text-white ${color}`}>
+const ResultBox: React.FC<ResultBoxProps> = ({ label, amount, color, tooltip }) => (
+    <div className={`p-3 rounded-lg shadow-md text-white ${color}`}>
         <div className="flex justify-between items-center">
-            <span className="text-lg sm:text-xl font-bold">{label}</span>
+            <span className="text-lg sm:text-xl font-bold flex items-center">
+                {label}
+                {tooltip && <TooltipIcon text={tooltip} />}
+            </span>
             <span className="text-xl sm:text-2xl font-extrabold">{amount.toLocaleString()}</span>
         </div>
     </div>
@@ -60,7 +79,7 @@ const CustomTooltip = ({ active, payload, label }: any) => {
     return (
       <div className="bg-white p-3 border border-gray-300 rounded-lg shadow-lg">
         <p className="font-bold text-gray-800">{label}</p>
-        <p className={`text-sm ${isTotal ? 'text-blue-600' : (change > 0 ? 'text-green-600' : 'text-red-600')}`}>
+        <p className={`text-sm ${isTotal ? 'text-blue-600' : (change >= 0 ? 'text-green-600' : 'text-red-600')}`}>
           {isTotal ? '合計: ' : '変動: '} {sign}{value.toLocaleString()}
         </p>
       </div>
@@ -69,117 +88,88 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const ChartBox: React.FC<{ label: string; amount: number; percentage: number; color: string; }> = ({ label, amount, percentage, color }) => {
+    if (percentage === 0) return null;
+    const isTextReadable = percentage >= 10;
+    return (
+        <div 
+            className={`relative group flex flex-col justify-center items-center p-2 text-white shadow-inner ${color}`}
+            style={{ height: `${percentage}%` }}
+        >
+            <div className={`text-center transition-opacity duration-300 ${isTextReadable ? 'opacity-100' : 'opacity-0'}`}>
+                <div className="font-bold text-sm sm:text-lg truncate">{label}</div>
+                <div className="text-xs sm:text-sm font-semibold">{amount.toLocaleString()}</div>
+                <div className="text-xs opacity-80">({percentage.toFixed(1)}%)</div>
+            </div>
+            <div 
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-max max-w-xs p-3 text-sm text-white bg-gray-900 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-20 pointer-events-none"
+            >
+                <p className="font-bold text-base">{label}</p>
+                <p>{amount.toLocaleString()}円 ({percentage.toFixed(1)}%)</p>
+                <svg className="absolute text-gray-900 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xmlSpace="preserve">
+                    <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
+                </svg>
+            </div>
+        </div>
+    );
+};
+
 const IncomeStatement: React.FC = () => {
   const { incomeStatement } = useTransactions();
   const navigate = useNavigate();
+  const [chartType, setChartType] = useState('box');
 
   // --- Calculations for Income Statement ---
   const totalRevenue = Object.values(incomeStatement.収益).reduce((s, v) => s + v, 0);
   const totalCOGS = Object.values(incomeStatement.費用.売上原価).reduce((s, v) => s + v, 0);
-  const totalSGA = Object.values(incomeStatement.費用.販売費及び一般管理費).reduce((s, v) => s + v, 0);
-  const totalTax = Object.values(incomeStatement.費用.法人税等).reduce((s, v) => s + v, 0);
-  
   const grossProfit = totalRevenue - totalCOGS;
+
+  const totalSGA = Object.values(incomeStatement.費用.販売費及び一般管理費).reduce((s, v) => s + v, 0);
   const operatingIncome = grossProfit - totalSGA;
-  const preTaxIncome = operatingIncome; // Simplified assumption for this app
-  const finalNetIncome = incomeStatement.当期純利益; // Sourced directly from context
 
-  //const taxAccountId = 13;
-  //const accruedTaxAccountId = 14;
-  //const retainedEarningsAccountId = 15;
+  const totalNonOperatingRevenue = Object.values(incomeStatement.営業外収益).reduce((s, v) => s + v, 0);
+  const totalNonOperatingExpenses = Object.values(incomeStatement.費用.営業外費用).reduce((s, v) => s + v, 0);
+  const ordinaryIncome = operatingIncome + totalNonOperatingRevenue - totalNonOperatingExpenses;
 
-  //const isTaxPosted = totalTax > 0;
-  //const isClosed = transactions.some(tx => tx.description === '決算整理仕訳（損益振替）');
+  const totalExtraordinaryProfit = Object.values(incomeStatement.特別利益).reduce((s, v) => s + v, 0);
+  const totalExtraordinaryLosses = Object.values(incomeStatement.費用.特別損失).reduce((s, v) => s + v, 0);
+  const preTaxIncome = ordinaryIncome + totalExtraordinaryProfit - totalExtraordinaryLosses;
 
-  /*const handlePostTax = () => {
-    if (isTaxPosted) {
-        alert("納税額は既に計上済みです。");
-        return;
-    }
-    const calculatedTaxForTransaction = Math.floor(preTaxIncome * 0.3);
-    const taxTransaction = {
-        transactionDate: new Date().toISOString().split('T')[0],
-        description: '法人税等の計上',
-        entries: [
-            { entryId: 0, transactionId: 0, accountId: taxAccountId, debitAmount: calculatedTaxForTransaction, creditAmount: 0 },
-            { entryId: 1, transactionId: 0, accountId: accruedTaxAccountId, debitAmount: 0, creditAmount: calculatedTaxForTransaction }
-        ]
-    };
-    addTransaction(taxTransaction);
-    alert('納税額を費用として計上しました。');
-  };
+  const totalTax = Object.values(incomeStatement.費用.法人税等).reduce((s, v) => s + v, 0);
+  const finalNetIncome = preTaxIncome - totalTax;
 
- /* const handleClosingEntry = () => {
-    if (isClosed) {
-      alert("既に決算整理は完了しています。");
-      return;
-    }
-    if (!isTaxPosted) {
-      alert("先に納税額を費用計上してください。");
-      return;
-    }
+  // --- Chart Data ---
+  const perc = (value: number) => (totalRevenue > 0 ? Math.abs(value / totalRevenue) * 100 : 0);
 
-    const closingEntries = [];
-
-    // 1. Close all revenue accounts
-    for (const [name, amount] of Object.entries(incomeStatement.収益)) {
-      const account = accountsMaster.find(a => a.name === name && a.type === 'revenue');
-      if (account) {
-        closingEntries.push({ accountId: account.id, debitAmount: amount, creditAmount: 0 });
-      }
-    }
-
-    // 2. Close all expense accounts
-    for (const [name, amount] of Object.entries(incomeStatement.費用.売上原価)) {
-       const account = accountsMaster.find(a => a.name === name && a.type === 'expense');
-       if (account) {
-         closingEntries.push({ accountId: account.id, debitAmount: 0, creditAmount: amount });
-       }
-    }
-     for (const [name, amount] of Object.entries(incomeStatement.費用.販売費及び一般管理費)) {
-       const account = accountsMaster.find(a => a.name === name && a.type === 'expense');
-       if (account) {
-         closingEntries.push({ accountId: account.id, debitAmount: 0, creditAmount: amount });
-       }
-    }
-    // Close tax expense
-    closingEntries.push({ accountId: taxAccountId, debitAmount: 0, creditAmount: totalTax });
-
-    // 3. Transfer net income to retained earnings
-    closingEntries.push({ accountId: retainedEarningsAccountId, debitAmount: 0, creditAmount: finalNetIncome });
-    
-    const closingTransaction = {
-      transactionDate: new Date().toISOString().split('T')[0],
-      description: '決算整理仕訳（損益振替）',
-      entries: closingEntries.map((e, index) => ({ ...e, entryId: index, transactionId: 0 }))
-    };
-
-    addTransaction(closingTransaction);
-    alert('決算整理仕訳が作成され、利益が確定しました。');
-  };
-*/
-  // --- Waterfall Chart Data for Income Statement ---
   const plWaterfallData = [];
   let plRunningTotal = 0;
 
-  plWaterfallData.push({ name: '総収益', value: [0, totalRevenue], delta: totalRevenue, type: 'total' });
+  plWaterfallData.push({ name: '総収益', value: [0, totalRevenue], delta: totalRevenue, type: 'revenue' });
   plRunningTotal = totalRevenue;
-
   plWaterfallData.push({ name: '売上原価', value: [plRunningTotal, plRunningTotal - totalCOGS], delta: -totalCOGS, type: 'expense' });
   plRunningTotal -= totalCOGS;
   plWaterfallData.push({ name: '売上総利益', value: [0, plRunningTotal], delta: plRunningTotal, type: 'total' });
-
   plWaterfallData.push({ name: '販管費', value: [plRunningTotal, plRunningTotal - totalSGA], delta: -totalSGA, type: 'expense' });
   plRunningTotal -= totalSGA;
   plWaterfallData.push({ name: '営業利益', value: [0, plRunningTotal], delta: plRunningTotal, type: 'total' });
-
+  plWaterfallData.push({ name: '営業外収益', value: [plRunningTotal, plRunningTotal + totalNonOperatingRevenue], delta: totalNonOperatingRevenue, type: 'revenue' });
+  plRunningTotal += totalNonOperatingRevenue;
+  plWaterfallData.push({ name: '営業外費用', value: [plRunningTotal, plRunningTotal - totalNonOperatingExpenses], delta: -totalNonOperatingExpenses, type: 'expense' });
+  plRunningTotal -= totalNonOperatingExpenses;
+  plWaterfallData.push({ name: '経常利益', value: [0, plRunningTotal], delta: plRunningTotal, type: 'total' });
+  plWaterfallData.push({ name: '特別利益', value: [plRunningTotal, plRunningTotal + totalExtraordinaryProfit], delta: totalExtraordinaryProfit, type: 'revenue' });
+  plRunningTotal += totalExtraordinaryProfit;
+  plWaterfallData.push({ name: '特別損失', value: [plRunningTotal, plRunningTotal - totalExtraordinaryLosses], delta: -totalExtraordinaryLosses, type: 'expense' });
+  plRunningTotal -= totalExtraordinaryLosses;
+  plWaterfallData.push({ name: '税引前利益', value: [0, plRunningTotal], delta: plRunningTotal, type: 'total' });
   plWaterfallData.push({ name: '法人税等', value: [plRunningTotal, plRunningTotal - totalTax], delta: -totalTax, type: 'expense' });
   plRunningTotal -= totalTax;
   plWaterfallData.push({ name: '当期純利益', value: [0, plRunningTotal], delta: plRunningTotal, type: 'total' });
   
   const plColors = {
-    expense: '#ef4444', // red
-    total: '#475569'  // slate
+      revenue: '#22c55e',
+      expense: '#ef4444',
+      total: '#475569'
   };
 
 
@@ -199,57 +189,85 @@ const IncomeStatement: React.FC = () => {
                 <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">損益計算書</h1>
             </div>
 
-            <div className="max-w-3xl mx-auto space-y-8">
-                <ReportBlock title="収益" color="bg-gray-100">
-                   <ReportRow label="総収益" amount={totalRevenue} isTotal />
-                </ReportBlock>
-
-                <ReportBlock title="売上原価" color="bg-gray-100">
-                    <ReportRow label="売上原価合計" amount={`(${totalCOGS.toLocaleString()})`} isTotal />
-                </ReportBlock>
-
-                <ResultBox label="売上総利益" amount={grossProfit} color="bg-slate-600" />
-                
-                <ReportBlock title="販売費及び一般管理費" color="bg-gray-100">
-                     <ReportRow label="販管費合計" amount={`(${totalSGA.toLocaleString()})`} isTotal />
-                </ReportBlock>
-                
-                <ResultBox label="営業利益" amount={operatingIncome} color="bg-sky-700" />
-
-                {/* --- Tax Section --- */}
-                <div className="border-t-2 border-dashed pt-8 mt-8">
-                    <ResultBox label="税引前当期純利益" amount={preTaxIncome} color="bg-slate-600" />
-                    <div className="my-6 text-center">
-                        <p className="text-2xl font-bold text-gray-500">-</p>
-                    </div>
-                    <ReportBlock title="法人税、住民税及び事業税" color="bg-gray-100">
-                        <ReportRow label={`法人税等 (税率 30%)`} amount={`(${totalTax.toLocaleString()})`} />
+            <div className="max-w-3xl mx-auto space-y-2">
+                <div className="space-y-2">
+                    <ReportBlock title="売上総利益" tooltip="粗利益とも呼ばれ、商品の付加価値を示す基本的な利益です">
+                       <ReportRow label="売上高" amount={totalRevenue} />
+                       <ReportRow label="売上原価" amount={`▲ ${totalCOGS.toLocaleString()}`} />
+                       <ReportRow label="売上総利益" amount={grossProfit} isTotal />
                     </ReportBlock>
-                    <ResultBox label="当期純利益" amount={finalNetIncome} color="bg-green-600" />
+
+                    <ReportBlock title="営業利益" tooltip="売上総利益から販管費を引いた、本業による利益です">
+                       <ReportRow label="販売費及び一般管理費" amount={`▲ ${totalSGA.toLocaleString()}`} />
+                       <ReportRow label="営業利益" amount={operatingIncome} isTotal />
+                    </ReportBlock>
+
+                    {/* --- Ordinary Income Section --- */}
+                    <div className="pl-4 border-l-2 border-gray-200 space-y-2">
+                        <ReportBlock title="営業外収益" tooltip="営業利益に利息収入や投資収益などを加えた、本業以外のプラス要因です">
+                            {Object.entries(incomeStatement.営業外収益).map(([key, value]) => (
+                                <ReportRow key={key} label={key} amount={value} isSub />
+                            ))}
+                             <ReportRow label="営業外収益 合計" amount={totalNonOperatingRevenue} isTotal />
+                        </ReportBlock>
+                        <ReportBlock title="営業外費用" tooltip="営業利益から支払利息や投資損失などを引いた、本業以外のマイナス要因です">
+                            {Object.entries(incomeStatement.費用.営業外費用).map(([key, value]) => (
+                                <ReportRow key={key} label={key} amount={`▲ ${value.toLocaleString()}`} isSub />
+                            ))}
+                            <ReportRow label="営業外費用 合計" amount={`▲ ${totalNonOperatingExpenses.toLocaleString()}`} isTotal />
+                        </ReportBlock>
+                    </div>
+                    <ResultBox label="経常利益" amount={ordinaryIncome} color="bg-sky-700" tooltip="営業利益に利息収入などを加減した、通常の事業活動による利益です" />
+
+                    {/* --- Pre-Tax Income Section --- */}
+                     <div className="pl-4 border-l-2 border-gray-200 space-y-2">
+                        <ReportBlock title="特別利益" tooltip="経常利益に固定資産売却益など、臨時・特別なプラス要因を加えたものです">
+                            {Object.entries(incomeStatement.特別利益).map(([key, value]) => (
+                                <ReportRow key={key} label={key} amount={value} isSub />
+                            ))}
+                            <ReportRow label="特別利益 合計" amount={totalExtraordinaryProfit} isTotal />
+                        </ReportBlock>
+                        <ReportBlock title="特別損失" tooltip="経常利益から災害損失や資産除却損など、臨時・特別なマイナス要因を引いたものです">
+                            {Object.entries(incomeStatement.費用.特別損失).map(([key, value]) => (
+                                 <ReportRow key={key} label={key} amount={`▲ ${value.toLocaleString()}`} isSub />
+                            ))}
+                            <ReportRow label="特別損失 合計" amount={`▲ ${totalExtraordinaryLosses.toLocaleString()}`} isTotal />
+                        </ReportBlock>
+                    </div>
+                    <ResultBox label="税引前当期純利益" amount={preTaxIncome} color="bg-indigo-700" tooltip="特別損益も含めた、すべての活動による税引前の利益です" />
+                    
+                    {/* --- Net Income Section --- */}
+                    <div className="pl-4 border-l-2 border-gray-200 space-y-2">
+                         <ReportBlock title="法人税、住民税及び事業税">
+                            <ReportRow label={`法人税等`} amount={`▲ ${totalTax.toLocaleString()}`} />
+                        </ReportBlock>
+                    </div>
+                    <ResultBox label="当期純利益" amount={finalNetIncome} color="bg-emerald-600" tooltip="会社が1年間で稼いだ最終的な利益。配当や内部留保の源泉です" />
                 </div>
 
-                {/* 
-                <ReportBlock title="決算整理仕訳" color="bg-gray-100">
-                    <ReportRow label="期首繰越利益剰余金" amount={`(${openingRetainedEarnings?.entries.find(e => e.accountId === retainedEarningsAccountId)?.creditAmount || 0})`} />
-                    <ReportRow label="総収益" amount={`(${totalRevenue})`} />
-                    <ReportRow label="売上原価" amount={`(${totalCOGS})`} />
-                    <ReportRow label="売上総利益" amount={`(${grossProfit})`} />
-                    <ReportRow label="販売費及び一般管理費" amount={`(${totalSGA})`} />
-                    <ReportRow label="営業利益" amount={`(${operatingIncome})`} />
-                    <ReportRow label="法人税等" amount={`(${totalTax})`} />
-                    <ReportRow label="税引前当期純利益" amount={`(${preTaxIncome})`} />
-                    <ReportRow label="当期純利益" amount={`(${finalNetIncome})`} />
-                    <ReportRow label="期末繰越利益剰余金" amount={`(${closingRetainedEarnings?.entries.find(e => e.accountId === retainedEarningsAccountId)?.creditAmount || 0})`} />
-                </ReportBlock>
-                */}
-
-                {/* --- Waterfall Chart --- */}
-                <ReportBlock title="P/Lウォーターフォール図" color="bg-gray-100">
-                    <div className="h-full w-full" style={{ height: 400 }}>
-                        <ResponsiveContainer>
-                            <BarChart data={plWaterfallData} margin={{ top: 20, right: 20, left: 0, bottom: 75 }}>
+                <div className="pt-4">
+                    <div className="bg-gray-100 rounded-lg shadow-sm p-4">
+                        <h3 className="text-lg font-semibold text-center mb-4">PLチャート</h3>
+                        <div className="flex justify-center mb-4">
+                            <button
+                                onClick={() => setChartType('box')}
+                                className={`px-4 py-2 text-sm font-medium rounded-l-lg ${chartType === 'box' ? 'bg-slate-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                            >
+                                ボックス図
+                            </button>
+                            <button
+                                onClick={() => setChartType('waterfall')}
+                                className={`px-4 py-2 text-sm font-medium rounded-r-lg ${chartType === 'waterfall' ? 'bg-slate-600 text-white' : 'bg-gray-200 text-gray-700'}`}
+                            >
+                                ウォーターフォール図
+                            </button>
+                        </div>
+                        {chartType === 'waterfall' ? (
+                            <div className="h-full w-full" style={{ height: 400 }}>
+                                <ResponsiveContainer>
+                                    <BarChart data={plWaterfallData} margin={{ top: 20, right: 20, left: 0, bottom: 100 }}>
                                 <CartesianGrid strokeDasharray="3 3" />
-                                <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} />
+                                        <XAxis dataKey="name" angle={-60} textAnchor="end" height={120} interval={0} />
                                 <YAxis />
                                 <Tooltip content={<CustomTooltip />} />
                                 <Bar dataKey="value">
@@ -260,7 +278,31 @@ const IncomeStatement: React.FC = () => {
                             </BarChart>
                         </ResponsiveContainer>
                     </div>
-                </ReportBlock>
+                        ) : (
+                            <div className="w-full max-w-2xl mx-auto">
+                                <div className="flex" style={{ height: '500px' }}>
+                                    <div className="w-1/2 flex flex-col">
+                                        <ChartBox label="売上原価" amount={totalCOGS} percentage={perc(totalCOGS)} color="bg-slate-400" />
+                                        <ChartBox label="販管費" amount={totalSGA} percentage={perc(totalSGA)} color="bg-slate-500" />
+                                        <ChartBox label="営業外費用" amount={totalNonOperatingExpenses} percentage={perc(totalNonOperatingExpenses)} color="bg-slate-500" />
+                                        <ChartBox label="特別損失" amount={totalExtraordinaryLosses} percentage={perc(totalExtraordinaryLosses)} color="bg-slate-600" />
+                                        <ChartBox label="法人税等" amount={totalTax} percentage={perc(totalTax)} color="bg-slate-600" />
+                                        <ChartBox label="当期純利益" amount={finalNetIncome} percentage={perc(finalNetIncome)} color="bg-emerald-500" />
+                                    </div>
+                                    <div className="w-1/2 flex flex-col">
+                                        <ChartBox label="総収益" amount={totalRevenue} percentage={perc(totalRevenue)} color="bg-cyan-500" />
+                                        <ChartBox label="営業外収益" amount={totalNonOperatingRevenue} percentage={perc(totalNonOperatingRevenue)} color="bg-cyan-400" />
+                                        <ChartBox label="特別利益" amount={totalExtraordinaryProfit} percentage={perc(totalExtraordinaryProfit)} color="bg-cyan-300" />
+                                    </div>
+                                </div>
+                                <div className="flex w-full text-center mt-2 text-sm sm:text-base">
+                                    <div className="w-1/2 font-bold text-gray-700 p-2 border-t-2">費用・利益合計: {(totalCOGS + totalSGA + totalNonOperatingExpenses + totalExtraordinaryLosses + totalTax + finalNetIncome).toLocaleString()}</div>
+                                    <div className="w-1/2 font-bold text-gray-700 p-2 border-t-2">収益合計: {(totalRevenue + totalNonOperatingRevenue + totalExtraordinaryProfit).toLocaleString()}</div>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                </div>
             </div>
         </div>
     </div>

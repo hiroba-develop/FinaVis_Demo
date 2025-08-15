@@ -12,12 +12,14 @@ const FlowBox: React.FC<FlowBoxProps> = ({ title, amount }) => {
     const isPositive = amount >= 0;
     const color = isPositive ? 'bg-sky-100 border-sky-500' : 'bg-rose-100 border-rose-500';
     const textColor = isPositive ? 'text-sky-700' : 'text-rose-700';
-    const sign = isPositive ? '+' : '-';
+    const formattedAmount = isPositive 
+        ? `+ ${amount.toLocaleString()}` 
+        : `▲ ${Math.abs(amount).toLocaleString()}`;
 
     return (
         <div className={`rounded-lg shadow-sm p-4 border-l-4 ${color}`}>
             <h3 className="font-semibold text-lg text-gray-700">{title}</h3>
-            <p className={`text-2xl font-bold text-right ${textColor}`}>{sign} {Math.abs(amount).toLocaleString()}</p>
+            <p className={`text-2xl font-bold text-right ${textColor}`}>{formattedAmount}</p>
         </div>
     );
 };
@@ -115,7 +117,9 @@ const CashFlowStatement: React.FC = () => {
                  <div className="flex justify-between font-bold text-lg p-3">
                     <span>現金及び現金同等物の増減額</span>
                     <span className={cashFlowStatement.netCashFlow >= 0 ? 'text-green-600' : 'text-red-600'}>
-                        {cashFlowStatement.netCashFlow.toLocaleString()}
+                        {cashFlowStatement.netCashFlow >= 0
+                            ? cashFlowStatement.netCashFlow.toLocaleString()
+                            : `▲ ${Math.abs(cashFlowStatement.netCashFlow).toLocaleString()}`}
                     </span>
                 </div>
                 <BalanceBox label="期末残高" amount={cashFlowStatement.endingCashBalance} />

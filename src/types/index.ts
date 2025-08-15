@@ -10,7 +10,9 @@ export interface Account {
   id: number;
   name: string;
   type: 'asset' | 'liability' | 'equity' | 'revenue' | 'expense';
-  sub_type: 'current' | 'fixed' | 'cogs' | 'sga' | 'tax' | null;
+  sub_type: 'current' | 'fixed' | 'cogs' | 'sga' | 'tax' | 
+            'non-operating-expense' | 'extraordinary-loss' | 
+            'non-operating-revenue' | 'extraordinary-profit' | null;
 }
 
 // 仕訳の型定義
@@ -73,9 +75,13 @@ export interface IncomeStatement {
   費用: {
     売上原価: { [key: string]: number };
     販売費及び一般管理費: { [key: string]: number };
+    営業外費用: { [key: string]: number };
+    特別損失: { [key: string]: number };
     法人税等: { [key: string]: number };
     費用合計: number;
   };
+  営業外収益: { [key: string]: number };
+  特別利益: { [key: string]: number };
   当期純利益: number;
 }
 

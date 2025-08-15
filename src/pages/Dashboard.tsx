@@ -4,6 +4,13 @@ import { useTransactions } from '../contexts/TransactionContext';
 import TransactionForm from '../components/TransactionForm';
 import SimpleTransactionForm from '../components/SimpleTransactionForm';
 
+const formatCurrency = (amount: number) => {
+    if (amount < 0) {
+        return `▲ ${Math.abs(amount).toLocaleString()}`;
+    }
+    return `${amount.toLocaleString()}`;
+};
+
 const IconLink: React.FC<{className?: string}> = ({className}) => (
     <svg className={`w-4 h-4 text-gray-400 group-hover:text-accent transition-colors ${className}`} xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
         <path strokeLinecap="round" strokeLinejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244" />
@@ -96,7 +103,7 @@ const Dashboard: React.FC = () => {
                         {isClosed ? '期間確定利益:' : <><IconArrowDown /><span>当期純利益:</span></>}
                     </div>
                     <span className={isClosed ? 'text-slate-700' : 'text-sky-700'}>
-                      {isClosed ? finalPeriodIncome.toLocaleString() : incomeStatement.当期純利益.toLocaleString()}円
+                      {isClosed ? formatCurrency(finalPeriodIncome) : formatCurrency(incomeStatement.当期純利益)}円
                     </span>
                 </div>
                 {isClosed && <p className="text-xs text-center text-slate-500 mt-2">（決算整理により利益が確定しました）</p>}
@@ -125,11 +132,11 @@ const Dashboard: React.FC = () => {
                                 {!isClosed && <IconArrowUp />}
                                 <span>利益剰余金:</span>
                             </div>
-                            <span>{balanceSheet.equity.利益剰余金.toLocaleString()}円</span>
+                            <span>{formatCurrency(balanceSheet.equity.利益剰余金)}円</span>
                         </div>
                         {!isClosed && (
                             <div className="text-right text-sky-700 text-sm font-semibold">
-                                (+ {incomeStatement.当期純利益.toLocaleString()}円 が加算予定)
+                                (+ {formatCurrency(incomeStatement.当期純利益)}円 が加算予定)
                             </div>
                         )}
                     </div>
@@ -140,9 +147,9 @@ const Dashboard: React.FC = () => {
             <Link to="/cash-flow-statement" className="bg-white rounded-lg shadow-lg p-6 hover:shadow-xl transition-shadow duration-300">
                 <h2 className="text-xl font-bold text-accent mb-4 text-center">キャッシュフロー計算書 (C/F)</h2>
                 <div className="space-y-3 text-gray-700">
-                    <div className="flex justify-between"><span>営業CF:</span><span className="font-semibold">{cashFlowStatement.operatingActivities.toLocaleString()}円</span></div>
-                    <div className="flex justify-between"><span>投資CF:</span><span className="font-semibold">{cashFlowStatement.investingActivities.toLocaleString()}円</span></div>
-                    <div className="flex justify-between"><span>財務CF:</span><span className="font-semibold">{cashFlowStatement.financingActivities.toLocaleString()}円</span></div>
+                    <div className="flex justify-between"><span>営業CF:</span><span className="font-semibold">{formatCurrency(cashFlowStatement.operatingActivities)}円</span></div>
+                    <div className="flex justify-between"><span>投資CF:</span><span className="font-semibold">{formatCurrency(cashFlowStatement.investingActivities)}円</span></div>
+                    <div className="flex justify-between"><span>財務CF:</span><span className="font-semibold">{formatCurrency(cashFlowStatement.financingActivities)}円</span></div>
                     <div className="flex justify-between items-center font-bold text-lg bg-teal-50 p-3 rounded-md border-l-4 border-teal-300 mt-3">
                         <div className="flex items-center gap-2">
                             <IconLink />
