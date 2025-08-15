@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
@@ -96,11 +96,11 @@ const CustomLegend: React.FC = () => (
         </div>
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#ef4444' }}></div>
-            <span>マイナスCF (現金減少)</span>
+            <span>マイナス要因</span>
         </div>
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#3b82f6' }}></div>
-            <span>プラスCF (現金増加)</span>
+            <span>プラス要因</span>
         </div>
     </div>
 );
@@ -108,6 +108,16 @@ const CustomLegend: React.FC = () => (
 const CashFlowStatement: React.FC = () => {
   const { cashFlowStatement } = useTransactions();
   const navigate = useNavigate();
+  const [chartMarginLeft, setChartMarginLeft] = useState(20);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setChartMarginLeft(window.innerWidth < 768 ? 20 : 60);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
   
   const cfWaterfallData = [];
   let cfRunningTotal = 0;
@@ -198,11 +208,11 @@ const CashFlowStatement: React.FC = () => {
 
       {/* --- Bottom section for the Waterfall Chart --- */}
       <div className="relative bg-gray-50 rounded-xl shadow-lg p-4 md:p-8 mt-10">
-        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">キャッシュフローの流れ</h2>
+        <h2 className="text-xl sm:text-2xl font-bold text-gray-800 mb-6 text-center">C/Fウォーターフォール図</h2>
         <CustomLegend />
         <div style={{ width: '100%', height: 400 }}>
           <ResponsiveContainer>
-            <BarChart data={cfWaterfallData} margin={{ top: 5, right: 20, left: 70, bottom: 5 }}>
+            <BarChart data={cfWaterfallData} margin={{ top: 5, right: 20, left: chartMarginLeft, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis dataKey="name" />
               <YAxis tickFormatter={yAxisFormatter} domain={[yMin, yMax]} ticks={ticks} />

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
@@ -129,19 +129,19 @@ const CustomLegend: React.FC = () => (
     <div className="flex justify-center items-center space-x-4 md:space-x-6 mb-4 text-sm text-gray-600">
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#22c55e' }}></div>
-            <span>利益（中間合計）</span>
+            <span>中間合計</span>
         </div>
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#ef4444' }}></div>
-            <span>費用（マイナス要因）</span>
+            <span>マイナス要因</span>
         </div>
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#3b82f6' }}></div>
-            <span>収益（プラス要因）</span>
+            <span>プラス要因</span>
         </div>
         <div className="flex items-center">
             <div className="w-4 h-4 mr-2" style={{ backgroundColor: '#10b981' }}></div>
-            <span>当期純利益（最終結果）</span>
+            <span>最終合計</span>
         </div>
     </div>
 );
@@ -177,6 +177,16 @@ const IncomeStatement: React.FC = () => {
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('box');
   const [waterfallView, setWaterfallView] = useState('simple');
+  const [chartMarginLeft, setChartMarginLeft] = useState(20);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setChartMarginLeft(window.innerWidth < 768 ? 20 : 60);
+    };
+    window.addEventListener('resize', handleResize);
+    handleResize();
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   // --- Calculations for Income Statement ---
   const totalRevenue = Object.values(incomeStatement.収益).reduce((s, v) => s + v, 0);
@@ -415,7 +425,7 @@ const IncomeStatement: React.FC = () => {
                                 <div className="h-full w-full" style={{ height: 400 }}>
                                     <CustomLegend />
                                     <ResponsiveContainer>
-                                        <BarChart data={waterfallData} margin={{ top: 5, right: 20, left: 70, bottom: 5 }}>
+                                        <BarChart data={waterfallData} margin={{ top: 5, right: 20, left: chartMarginLeft, bottom: 5 }}>
                                     <CartesianGrid strokeDasharray="3 3" />
                                             <XAxis dataKey="name" angle={-45} textAnchor="end" height={100} interval={0} />
                                     <YAxis tickFormatter={yAxisFormatter} domain={[yMin, yMax]} ticks={ticks} />
