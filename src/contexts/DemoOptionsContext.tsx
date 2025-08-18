@@ -17,8 +17,17 @@ export const DemoOptionsProvider = ({ children }: { children: ReactNode }) => {
     return storedValue !== null ? JSON.parse(storedValue) : true; 
   });
   
-  const { resetFiscalPeriod, setStartDate } = useFiscalPeriod();
-  const { clearHistory } = useHistory();
+  const { resetFiscalPeriod, setupSamplePeriod } = useFiscalPeriod();
+  const { clearHistory, initializeSampleHistory } = useHistory();
+
+  // Initialize history based on the initial sample data preference
+  useEffect(() => {
+    if (useSampleData) {
+      initializeSampleHistory();
+    } else {
+      clearHistory();
+    }
+  }, []); // Run only once on initial load
 
   useEffect(() => {
     localStorage.setItem('useSampleData', JSON.stringify(useSampleData));
@@ -34,17 +43,17 @@ export const DemoOptionsProvider = ({ children }: { children: ReactNode }) => {
     
     // Reset all related states
     resetFiscalPeriod();
-    clearHistory();
-
-    // If switching to sample data, set its specific start date
+    
     if (newUseSampleData) {
-      const sampleStartDate = new Date(Date.UTC(2024, 3, 1)); // April 1st
-      setStartDate(sampleStartDate);
+      initializeSampleHistory();
+      setupSamplePeriod();
+    } else {
+      clearHistory();
     }
     // If switching to initial data, the resetFiscalPeriod() call will
     // automatically trigger the settings modal because startDate will be null.
 
-  }, [useSampleData, resetFiscalPeriod, clearHistory, setStartDate]);
+  }, [useSampleData, resetFiscalPeriod, clearHistory, initializeSampleHistory, setupSamplePeriod]);
 
   const value = { useSampleData, setUseSampleData, toggleDemoData };
 

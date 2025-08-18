@@ -20,8 +20,8 @@ import FinancialHistory from "./pages/FinancialHistory"; // FinancialHistoryを�
 import { TransactionProvider } from "./contexts/TransactionContext";
 import { DemoOptionsProvider, useDemoOptions } from "./contexts/DemoOptionsContext";
 import { FiscalPeriodProvider, useFiscalPeriod } from "./contexts/FiscalPeriodContext";
-import { HistoryProvider } from "./contexts/HistoryContext"; // HistoryProviderをインポート
-import { useEffect, useState, useCallback } from "react"; // useCallbackを追加
+import { HistoryProvider, useHistory } from "./contexts/HistoryContext"; // useHistoryをインポート
+import { useEffect, useState, useCallback, useMemo } from "react"; // useCallback, useMemoを追加
 import type { BalanceSheet as BalanceSheetType } from "./types";
 
 // スクロールをトップに戻すコンポーネント
@@ -171,17 +171,25 @@ const AppContent: React.FC = () => {
 const TransactionProviderWithHooks: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { useSampleData } = useDemoOptions();
   const { startDate } = useFiscalPeriod();
-  const [openingRetainedEarnings, setOpeningRetainedEarnings] = useState(0);
+  const { history, addHistoricalData } = useHistory();
+
+  const openingBalanceSheet = useMemo(() => {
+    if (history.length > 0) {
+      return history[history.length - 1].balanceSheet;
+    }
+    return undefined; // Return undefined if no history
+  }, [history]);
 
   const handlePeriodClose = useCallback((closingBalanceSheet: BalanceSheetType) => {
-    setOpeningRetainedEarnings(closingBalanceSheet.equity.利益剰余金);
+    // This is a simplified version of what would happen.
+    // In a real app, you might not need this if the history context handles everything.
   }, []);
 
   return (
     <TransactionProvider
       key={startDate ? startDate.toISOString() : 'initial'}
       useSampleData={useSampleData}
-      initialRetainedEarnings={openingRetainedEarnings}
+      initialBalanceSheet={openingBalanceSheet}
       onPeriodClose={handlePeriodClose}
     >
       {children}

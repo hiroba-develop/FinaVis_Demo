@@ -11,7 +11,7 @@ const Login: React.FC = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
   const { setUseSampleData } = useDemoOptions();
-  const { setStartDate, resetFiscalPeriod } = useFiscalPeriod();
+  const { resetFiscalPeriod, setupSamplePeriod } = useFiscalPeriod();
 
   const handleDemoLogin = async (loadSampleData: boolean) => {
     setError("");
@@ -21,9 +21,7 @@ const Login: React.FC = () => {
     resetFiscalPeriod(); // Reset fiscal period state on every login
 
     if (loadSampleData) {
-      // Set the start date for the sample data, which will then fast-forward
-      const sampleStartDate = new Date(Date.UTC(2024, 3, 1)); // April 1st
-      setStartDate(sampleStartDate);
+      setupSamplePeriod();
     }
 
     try {

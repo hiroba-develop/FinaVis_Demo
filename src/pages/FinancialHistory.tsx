@@ -29,7 +29,8 @@ const FinancialHistory: React.FC = () => {
         <div className="container mx-auto px-4 py-8">
             <h1 className="text-2xl font-bold text-gray-800 mb-6">財務履歴</h1>
             
-            <div className="bg-white rounded-lg shadow-md overflow-hidden">
+            {/* --- Desktop Table --- */}
+            <div className="hidden md:block bg-white rounded-lg shadow-md overflow-x-auto">
                 <table className="min-w-full divide-y divide-gray-200">
                     <thead className="bg-gray-50">
                         <tr>
@@ -48,14 +49,42 @@ const FinancialHistory: React.FC = () => {
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{formatCurrency(periodData.balanceSheet.assets.資産合計)}円</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-700 text-right">{formatCurrency(periodData.cashFlowStatement.endingCashBalance)}円</td>
                                 <td className="px-6 py-4 whitespace-nowrap text-sm text-center space-x-2">
-                                    <Link to={`/income-statement/${index}`} className="text-accent hover:text-accent-dark font-semibold">P/L</Link>
-                                    <Link to={`/balance-sheet/${index}`} className="text-accent hover:text-accent-dark font-semibold">B/S</Link>
-                                    <Link to={`/cash-flow-statement/${index}`} className="text-accent hover:text-accent-dark font-semibold">C/F</Link>
+                                    <Link to={`/income-statement/${index}`} className="inline-block bg-sky-500 text-white font-semibold px-3 py-1 text-xs rounded-full hover:bg-sky-600 transition-colors">P/L</Link>
+                                    <Link to={`/balance-sheet/${index}`} className="inline-block bg-teal-500 text-white font-semibold px-3 py-1 text-xs rounded-full hover:bg-teal-600 transition-colors">B/S</Link>
+                                    <Link to={`/cash-flow-statement/${index}`} className="inline-block bg-indigo-500 text-white font-semibold px-3 py-1 text-xs rounded-full hover:bg-indigo-600 transition-colors">C/F</Link>
                                 </td>
                             </tr>
                         ))}
                     </tbody>
                 </table>
+            </div>
+
+            {/* --- Mobile Card List --- */}
+            <div className="md:hidden space-y-4">
+                {history.map((periodData, index) => (
+                    <div key={index} className="bg-white rounded-lg shadow-md p-4">
+                        <h2 className="font-bold text-gray-800 mb-2">{periodData.periodString}</h2>
+                        <div className="space-y-1 text-sm text-gray-700">
+                            <div className="flex justify-between">
+                                <span>当期純利益:</span>
+                                <span>{formatCurrency(periodData.incomeStatement.当期純利益)}円</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>総資産:</span>
+                                <span>{formatCurrency(periodData.balanceSheet.assets.資産合計)}円</span>
+                            </div>
+                            <div className="flex justify-between">
+                                <span>期末現金残高:</span>
+                                <span>{formatCurrency(periodData.cashFlowStatement.endingCashBalance)}円</span>
+                            </div>
+                        </div>
+                        <div className="mt-3 pt-3 border-t text-center space-x-4">
+                            <Link to={`/income-statement/${index}`} className="inline-block bg-sky-500 text-white font-semibold px-4 py-2 rounded-full hover:bg-sky-600 transition-colors">P/L</Link>
+                            <Link to={`/balance-sheet/${index}`} className="inline-block bg-teal-500 text-white font-semibold px-4 py-2 rounded-full hover:bg-teal-600 transition-colors">B/S</Link>
+                            <Link to={`/cash-flow-statement/${index}`} className="inline-block bg-indigo-500 text-white font-semibold px-4 py-2 rounded-full hover:bg-indigo-600 transition-colors">C/F</Link>
+                        </div>
+                    </div>
+                ))}
             </div>
         </div>
     );
