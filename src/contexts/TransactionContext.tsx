@@ -48,64 +48,55 @@ const initialCashFlowStatement: CashFlowStatement = {
 
 // --- Dynamic Sample Data Generation ---
 const generateSampleTransactions = (periodStartDate: Date): Transaction[] => {
-  const year = periodStartDate.getFullYear();
-  const month = periodStartDate.getMonth();
+  const allTransactions: Transaction[] = [];
+  let transactionIdCounter = 1;
 
-  // Helper to create a date in the current fiscal period's month
-  const d = (day: number) => new Date(Date.UTC(year, month, day)).toISOString().split('T')[0];
+  const today = new Date();
+  const currentYear = today.getUTCFullYear();
+  const currentMonth = today.getUTCMonth();
+  
+  const periodStartYear = periodStartDate.getUTCFullYear();
+  const periodStartMonth = periodStartDate.getUTCMonth();
 
-  return [
-    // Note: The opening balance from the previous period is now handled by initialRetainedEarnings
-    // and the first period history. We only need transactions for the *current* period.
-    {
-      transactionId: 1, userId: 1, transactionDate: d(5),
-      description: '商品を600,000円で現金で仕入れた',
-      entries: [
-        { entryId: 1, transactionId: 1, accountId: 8, debitAmount: 600000, creditAmount: 0 },
-        { entryId: 2, transactionId: 1, accountId: 1, debitAmount: 0, creditAmount: 600000 },
-      ],
-    },
-    {
-      transactionId: 2, userId: 1, transactionDate: d(15),
-      description: '商品を950,000円で売上げ、代金は掛けとした',
-      entries: [
-        { entryId: 3, transactionId: 2, accountId: 2, debitAmount: 950000, creditAmount: 0 },
-        { entryId: 4, transactionId: 2, accountId: 7, debitAmount: 0, creditAmount: 950000 },
-      ],
-    },
-    {
-      transactionId: 3, userId: 1, transactionDate: d(25),
-      description: '従業員の給料220,000円を現金で支払った',
-      entries: [
-        { entryId: 5, transactionId: 3, accountId: 9, debitAmount: 220000, creditAmount: 0 },
-        { entryId: 6, transactionId: 3, accountId: 1, debitAmount: 0, creditAmount: 220000 },
-      ],
-    },
-     {
-      transactionId: 4, userId: 1, transactionDate: d(28),
-      description: '買掛金180,000円を普通預金から支払った',
-      entries: [
-        { entryId: 7, transactionId: 4, accountId: 4, debitAmount: 180000, creditAmount: 0 },
-        { entryId: 8, transactionId: 4, accountId: 19, debitAmount: 0, creditAmount: 180000 },
-      ],
-    },
-    {
-      transactionId: 5, userId: 1, transactionDate: d(20),
-      description: '設備・備品300,000円を現金で購入した（投資CF）',
-      entries: [
-        { entryId: 9, transactionId: 5, accountId: 10, debitAmount: 300000, creditAmount: 0 },
-        { entryId: 10, transactionId: 5, accountId: 1, debitAmount: 0, creditAmount: 300000 },
-      ],
-    },
-    {
-      transactionId: 6, userId: 1, transactionDate: d(30),
-      description: '借入金100,000円を普通預金から返済した（財務CF）',
-      entries: [
-        { entryId: 11, transactionId: 6, accountId: 5, debitAmount: 100000, creditAmount: 0 },
-        { entryId: 12, transactionId: 6, accountId: 19, debitAmount: 0, creditAmount: 100000 },
-      ],
-    },
-  ];
+  // Iterate from the start of the fiscal period up to the current real-world month
+  for (let year = periodStartYear; year <= currentYear; year++) {
+    const startMonth = (year === periodStartYear) ? periodStartMonth : 0;
+    const endMonth = (year === currentYear) ? currentMonth : 11;
+
+    for (let month = startMonth; month <= endMonth; month++) {
+      const d = (day: number) => new Date(Date.UTC(year, month, day)).toISOString().split('T')[0];
+      
+      // Add a few transactions for each month
+      allTransactions.push(
+        {
+          transactionId: transactionIdCounter++, userId: 1, transactionDate: d(5),
+          description: `商品を${600000 + month * 10000}円で現金で仕入れた`,
+          entries: [
+            { entryId: 1, transactionId: 1, accountId: 8, debitAmount: 600000 + month * 10000, creditAmount: 0 },
+            { entryId: 2, transactionId: 1, accountId: 1, debitAmount: 0, creditAmount: 600000 + month * 10000 },
+          ],
+        },
+        {
+          transactionId: transactionIdCounter++, userId: 1, transactionDate: d(15),
+          description: `商品を${950000 + month * 15000}円で売上げ、代金は掛けとした`,
+          entries: [
+            { entryId: 3, transactionId: 2, accountId: 2, debitAmount: 950000 + month * 15000, creditAmount: 0 },
+            { entryId: 4, transactionId: 2, accountId: 7, debitAmount: 0, creditAmount: 950000 + month * 15000 },
+          ],
+        },
+        {
+          transactionId: transactionIdCounter++, userId: 1, transactionDate: d(25),
+          description: `従業員の給料220,000円を現金で支払った`,
+          entries: [
+            { entryId: 5, transactionId: 3, accountId: 9, debitAmount: 220000, creditAmount: 0 },
+            { entryId: 6, transactionId: 3, accountId: 1, debitAmount: 0, creditAmount: 220000 },
+          ],
+        }
+      );
+    }
+  }
+
+  return allTransactions;
 };
 
 
