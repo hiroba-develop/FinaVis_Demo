@@ -13,6 +13,7 @@ export interface HistoricalData {
 interface HistoryContextType {
   history: HistoricalData[];
   addHistoricalData: (data: HistoricalData) => void;
+  clearHistory: () => void;
 }
 
 const HistoryContext = createContext<HistoryContextType | undefined>(undefined);
@@ -24,7 +25,11 @@ export const HistoryProvider = ({ children }: { children: ReactNode }) => {
     setHistory(prevHistory => [...prevHistory, data]);
   }, []);
 
-  const value = { history, addHistoricalData };
+  const clearHistory = useCallback(() => {
+    setHistory([]);
+  }, []);
+
+  const value = { history, addHistoricalData, clearHistory };
 
   return (
     <HistoryContext.Provider value={value}>

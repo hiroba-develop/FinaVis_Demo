@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 import { useFiscalPeriod } from '../contexts/FiscalPeriodContext'; // FiscalPeriodContextをインポート
 import { useHistory } from '../contexts/HistoryContext'; // useHistoryをインポート
+import { useDemoOptions } from '../contexts/DemoOptionsContext'; // useDemoOptionsをインポート
 import TransactionForm from '../components/TransactionForm';
 import SimpleTransactionForm from '../components/SimpleTransactionForm';
 
@@ -37,6 +38,7 @@ const Dashboard: React.FC = () => {
   const { transactions, balanceSheet, incomeStatement, cashFlowStatement, addTransaction, accountsMaster, recordClosingBalanceSheet } = useTransactions();
   const { periodString, advanceToNextPeriod, startDate, endDate, openSettingsModal } = useFiscalPeriod(); // advanceToNextPeriodを取得
   const { addHistoricalData } = useHistory(); // addHistoricalDataを取得
+  const { useSampleData, toggleDemoData } = useDemoOptions(); // toggleDemoDataを取得
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formType, setFormType] = useState<'simple' | 'journal'>('simple');
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
@@ -182,6 +184,17 @@ const Dashboard: React.FC = () => {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-8">
+      {/* --- Data Mode Switcher --- */}
+      <div className="mb-4 text-left">
+        <span className="text-sm font-semibold text-gray-500 mr-2">データモード:</span>
+        <button 
+          onClick={toggleDemoData}
+          className="text-sm text-white bg-gray-500 hover:bg-gray-600 font-semibold py-1 px-3 rounded-full transition-colors"
+        >
+          {useSampleData ? 'サンプルデータ → 初期データに切り替え' : '初期データ → サンプルデータに切り替え'}
+        </button>
+      </div>
+
       {/* --- Fiscal Period Display --- */}
       <div className="bg-white rounded-lg shadow-lg mb-8 p-4 md:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
         <div>

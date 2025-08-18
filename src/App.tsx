@@ -192,15 +192,15 @@ const TransactionProviderWithHooks: React.FC<{ children: React.ReactNode }> = ({
 const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <AuthProvider>
-      <DemoOptionsProvider>
-        <HistoryProvider>
-          <FiscalPeriodProvider>
+      <HistoryProvider>
+        <FiscalPeriodProvider>
+          <DemoOptionsProvider>
             <TransactionProviderWithHooks>
               {children}
             </TransactionProviderWithHooks>
-          </FiscalPeriodProvider>
-        </HistoryProvider>
-      </DemoOptionsProvider>
+          </DemoOptionsProvider>
+        </FiscalPeriodProvider>
+      </HistoryProvider>
     </AuthProvider>
   );
 };
