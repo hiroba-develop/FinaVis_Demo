@@ -21,7 +21,7 @@ import { TransactionProvider } from "./contexts/TransactionContext";
 import { DemoOptionsProvider, useDemoOptions } from "./contexts/DemoOptionsContext";
 import { FiscalPeriodProvider, useFiscalPeriod } from "./contexts/FiscalPeriodContext";
 import { HistoryProvider, useHistory } from "./contexts/HistoryContext"; // useHistoryをインポート
-import { useEffect, useState, useCallback, useMemo } from "react"; // useCallback, useMemoを追加
+import { useEffect, useCallback, useMemo } from "react"; // useCallback, useMemoを追加
 import type { BalanceSheet as BalanceSheetType } from "./types";
 
 // スクロールをトップに戻すコンポーネント
@@ -171,7 +171,7 @@ const AppContent: React.FC = () => {
 const TransactionProviderWithHooks: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { useSampleData } = useDemoOptions();
   const { startDate } = useFiscalPeriod();
-  const { history, addHistoricalData } = useHistory();
+  const { history } = useHistory();
 
   const openingBalanceSheet = useMemo(() => {
     if (history.length > 0) {
@@ -180,7 +180,7 @@ const TransactionProviderWithHooks: React.FC<{ children: React.ReactNode }> = ({
     return undefined; // Return undefined if no history
   }, [history]);
 
-  const handlePeriodClose = useCallback((closingBalanceSheet: BalanceSheetType) => {
+  const handlePeriodClose = useCallback((_closingBalanceSheet: BalanceSheetType) => {
     // This is a simplified version of what would happen.
     // In a real app, you might not need this if the history context handles everything.
   }, []);
