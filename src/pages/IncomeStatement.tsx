@@ -2,20 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
-
-const TooltipIcon: React.FC<{ text: string }> = ({ text }) => (
-    <span className="group relative ml-2 flex items-center justify-center">
-        <div className="flex items-center justify-center h-5 w-5 rounded-full bg-gray-400 text-white text-xs font-bold cursor-pointer">
-            ?
-        </div>
-        <span className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-64 p-3 text-sm text-white bg-gray-800 rounded-md shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10 pointer-events-none">
-            {text}
-            <svg className="absolute text-gray-800 h-2 w-full left-0 top-full" x="0px" y="0px" viewBox="0 0 255 255" xmlSpace="preserve">
-                <polygon className="fill-current" points="0,0 127.5,127.5 255,0"/>
-            </svg>
-        </span>
-    </span>
-);
+import TooltipIcon from '../components/TooltipIcon';
 
 interface ReportRowProps {
   label: string;

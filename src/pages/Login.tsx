@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useDemoOptions } from "../contexts/DemoOptionsContext";
 import FinaVisLogo from "/FinaVis_logo_login.png";
 
 const Login = () => {
@@ -8,10 +9,12 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
+  const { setUseSampleData } = useDemoOptions();
 
-  const handleDemoLogin = async () => {
+  const handleDemoLogin = async (loadSampleData: boolean) => {
     setError("");
     setIsLoading(true);
+    setUseSampleData(loadSampleData); // Set the choice before logging in
 
     try {
       // デモ用のダミー情報でログイン
@@ -43,21 +46,26 @@ const Login = () => {
           </div>
         )}
 
-        <div className="space-y-6">
+        <div className="space-y-4">
           <div className="mt-8 text-center">
             <p className="text-gray-600">
               下のボタンを押してデモを開始します。
             </p>
           </div>
-          <div>
-            <button
-              onClick={handleDemoLogin}
+          <button
+              onClick={() => handleDemoLogin(true)}
               disabled={isLoading}
-              className="w-full py-3 mt-4 bg-accent rounded-lg text-white font-bold hover:bg-opacity-90 transition duration-300 disabled:bg-opacity-50"
+              className="w-full py-3 bg-accent rounded-lg text-white font-bold hover:bg-opacity-90 transition duration-300 disabled:bg-opacity-50"
             >
-              {isLoading ? "読み込み中..." : "デモを開始する"}
+              {isLoading ? "読み込み中..." : "デモを開始する（サンプルデータ）"}
             </button>
-          </div>
+            <button
+              onClick={() => handleDemoLogin(false)}
+              disabled={isLoading}
+              className="w-full py-3 bg-gray-500 rounded-lg text-white font-bold hover:bg-gray-600 transition duration-300 disabled:bg-opacity-50"
+            >
+              {isLoading ? "読み込み中..." : "デモを開始する（初期データ）"}
+            </button>
         </div>
         
         <div className="mt-8 text-center text-sm text-gray-500">

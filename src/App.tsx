@@ -16,6 +16,7 @@ import TransactionHistory from "./pages/TransactionHistory";
 import EditTransaction from "./pages/EditTransaction";
 import Help from "./pages/Help";
 import { TransactionProvider } from "./contexts/TransactionContext";
+import { DemoOptionsProvider, useDemoOptions } from "./contexts/DemoOptionsContext";
 import { useEffect } from "react";
 
 // スクロールをトップに戻すコンポーネント
@@ -142,17 +143,24 @@ const AppContent: React.FC = () => {
   );
 };
 
+const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { useSampleData } = useDemoOptions();
+  return <TransactionProvider useSampleData={useSampleData}>{children}</TransactionProvider>;
+};
+
 function App() {
   const basename = import.meta.env.BASE_URL;
 
   return (
-    <AuthProvider>
-      <TransactionProvider>
-        <Router basename={basename}>
-          <AppContent />
-        </Router>
-      </TransactionProvider>
-    </AuthProvider>
+    <Router basename={basename}>
+      <AuthProvider>
+        <DemoOptionsProvider>
+          <AppProviders>
+            <AppContent />
+          </AppProviders>
+        </DemoOptionsProvider>
+      </AuthProvider>
+    </Router>
   );
 }
 

@@ -206,14 +206,22 @@ const transactionTemplates: TransactionTemplate[] = [
     { id: 'loan-repayment-cash', label: '借入金を現金で返済', debitAccountId: 5, creditAccountId: 1 },
     { id: 'financing-loan', label: '銀行からの借入', debitAccountId: 1, creditAccountId: 5 },
     { id: 'financing-capital', label: '株主からの出資', debitAccountId: 1, creditAccountId: 6 },
+    { id: 'tax-payment-cash', label: '法人税等の現金での支払い', debitAccountId: 13, creditAccountId: 1 },
+    { id: 'interest-income-cash', label: '受取利息の現金での受け取り', debitAccountId: 1, creditAccountId: 16 },
+    { id: 'asset-sale-gain-cash', label: '固定資産売却益の現金での受け取り', debitAccountId: 1, creditAccountId: 17 },
+    { id: 'disaster-loss-cash', label: '災害損失の現金での処理', debitAccountId: 18, creditAccountId: 1 },
 ];
 
 
-export const TransactionProvider = ({ children }: { children: ReactNode }) => {
-  const [transactions, setTransactions] = useState<Transaction[]>(sampleTransactions);
+export const TransactionProvider = ({ children, useSampleData }: { children: ReactNode, useSampleData: boolean }) => {
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheet>(initialBalanceSheet);
   const [incomeStatement, setIncomeStatement] = useState<IncomeStatement>(initialIncomeStatement);
   const [cashFlowStatement, setCashFlowStatement] = useState<CashFlowStatement>(initialCashFlowStatement);
+
+  useEffect(() => {
+    setTransactions(useSampleData ? sampleTransactions : []);
+  }, [useSampleData]);
 
   const calculateFinancials = (currentTransactions: Transaction[]) => {
     // --- B/S and P/L Calculation (existing logic) ---
