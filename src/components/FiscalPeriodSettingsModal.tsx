@@ -6,7 +6,7 @@ interface FiscalPeriodSettingsModalProps {
 }
 
 const FiscalPeriodSettingsModal: React.FC<FiscalPeriodSettingsModalProps> = () => {
-  const { startDate, setStartDate, isSettingsModalOpen, closeModal, isInitialSetup } = useFiscalPeriod();
+  const { startDate, setStartDate, isSettingsModalOpen, closeSettingsModal, isInitialSetup } = useFiscalPeriod();
   
   const formatDate = (date: Date | null): string => {
     if (!date) {
@@ -56,7 +56,7 @@ const FiscalPeriodSettingsModal: React.FC<FiscalPeriodSettingsModalProps> = () =
         <div className="mt-8 flex justify-end space-x-4">
           {!isInitialSetup && (
             <button
-              onClick={closeModal}
+              onClick={closeSettingsModal}
               className="px-6 py-2 rounded-lg text-gray-700 bg-gray-200 hover:bg-gray-300 transition duration-300"
             >
               キャンセル

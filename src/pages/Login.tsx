@@ -40,14 +40,6 @@ const Login: React.FC = () => {
     }
   };
 
-  const handleStartWithoutSampleData = () => {
-    setUseSampleData(false);
-    resetFiscalPeriod(); // 期首日設定をリセット
-    // ログイン処理を実行
-    login("newuser", "password"); // 仮のユーザーでログイン
-    navigate("/");
-  };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-main">
       <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 m-4">

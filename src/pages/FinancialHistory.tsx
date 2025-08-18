@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
-import { useHistory, type HistoricalData } from '../contexts/HistoryContext';
-import { Link, useNavigate } from 'react-router-dom';
+import React from 'react';
+import { useHistory } from '../contexts/HistoryContext';
+import { Link } from 'react-router-dom';
 
 const formatCurrency = (amount: number) => {
     if (amount < 0) {
@@ -11,7 +11,6 @@ const formatCurrency = (amount: number) => {
 
 const FinancialHistory: React.FC = () => {
     const { history } = useHistory();
-    const navigate = useNavigate();
 
     if (history.length === 0) {
         return (
