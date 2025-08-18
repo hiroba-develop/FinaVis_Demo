@@ -1,23 +1,32 @@
-import { useState } from "react";
+import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import { useDemoOptions } from "../contexts/DemoOptionsContext";
+import { useFiscalPeriod } from "../contexts/FiscalPeriodContext";
 import FinaVisLogo from "/FinaVis_logo_login.png";
 
-const Login = () => {
+const Login: React.FC = () => {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
   const { login } = useAuth();
   const { setUseSampleData } = useDemoOptions();
+  const { setStartDate, resetFiscalPeriod } = useFiscalPeriod();
 
   const handleDemoLogin = async (loadSampleData: boolean) => {
     setError("");
     setIsLoading(true);
-    setUseSampleData(loadSampleData); // Set the choice before logging in
+    setUseSampleData(loadSampleData);
+
+    resetFiscalPeriod(); // Reset fiscal period state on every login
+
+    if (loadSampleData) {
+      // Set the start date for the sample data, which will then fast-forward
+      const sampleStartDate = new Date(Date.UTC(2024, 3, 1)); // April 1st
+      setStartDate(sampleStartDate);
+    }
 
     try {
-      // デモ用のダミー情報でログイン
       const success = await login("demo", "password");
       if (success) {
         navigate("/");
@@ -29,6 +38,14 @@ const Login = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleStartWithoutSampleData = () => {
+    setUseSampleData(false);
+    resetFiscalPeriod(); // 期首日設定をリセット
+    // ログイン処理を実行
+    login("newuser", "password"); // 仮のユーザーでログイン
+    navigate("/");
   };
 
   return (

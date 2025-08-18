@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
+import { useHistory } from '../contexts/HistoryContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import TooltipIcon from '../components/TooltipIcon';
+import PeriodSelector from '../components/PeriodSelector';
 
 // --- Reusable Components ---
 interface FlowBoxProps {
@@ -93,7 +95,9 @@ const CustomLegend: React.FC = () => (
 );
 
 const CashFlowStatement: React.FC = () => {
-  const { cashFlowStatement } = useTransactions();
+  const { cashFlowStatement: currentCashFlowStatement } = useTransactions();
+  const { history } = useHistory();
+  const { periodIndex } = useParams<{ periodIndex?: string }>();
   const navigate = useNavigate();
   const [chartMarginLeft, setChartMarginLeft] = useState(20);
 
@@ -105,7 +109,30 @@ const CashFlowStatement: React.FC = () => {
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const isHistoryView = periodIndex !== undefined;
+  const historyIndex = isHistoryView ? parseInt(periodIndex, 10) : -1;
+
+  let cashFlowStatement;
+  let pageTitle = "キャッシュフロー計算書";
+
+  if (isHistoryView) {
+    if (historyIndex >= 0 && historyIndex < history.length) {
+      const historicalData = history[historyIndex];
+      cashFlowStatement = historicalData.cashFlowStatement;
+      pageTitle = `${historicalData.periodString} のキャッシュフロー計算書`;
+    } else {
+      return <div>指定された期間のデータが見つかりません。</div>;
+    }
+  } else {
+    cashFlowStatement = currentCashFlowStatement;
+  }
+
+  if (!cashFlowStatement) {
+    return <div>キャッシュフロー計算書データを読み込んでいます...</div>;
+  }
   
+  // --- Chart Data Calculation (Moved after cashFlowStatement is defined) ---
   const cfWaterfallData = [];
   let cfRunningTotal = 0;
 
@@ -122,8 +149,7 @@ const CashFlowStatement: React.FC = () => {
   cfRunningTotal += cashFlowStatement.financingActivities;
 
   cfWaterfallData.push({ name: '期末残高', value: [0, cashFlowStatement.endingCashBalance], delta: cashFlowStatement.endingCashBalance, type: 'total' });
-
-
+  
   const getNiceInterval = (maxAbs: number) => {
     if (maxAbs <= 500000) return 100000;
     if (maxAbs <= 1000000) return 250000;
@@ -159,18 +185,20 @@ const CashFlowStatement: React.FC = () => {
     <div className="container mx-auto px-2 sm:px-4 py-8">
       {/* --- Top section for the C/F report boxes --- */}
       <div className="bg-gray-50 rounded-xl shadow-lg p-4 md:p-8">
-        <div className="md:relative mb-8">
+        <div className="md:relative mb-4">
             <button 
-                onClick={() => navigate(-1)} 
+                onClick={() => navigate(isHistoryView ? '/financial-history' : '/')} 
                 className="mb-4 md:mb-0 md:absolute md:top-1/2 md:-translate-y-1/2 md:left-0 bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-300 flex items-center text-sm"
             >
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                     <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                 </svg>
-                戻る
+                {isHistoryView ? '履歴一覧へ' : '戻る'}
             </button>
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">キャッシュフロー計算書</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">{pageTitle}</h1>
         </div>
+
+        <PeriodSelector basePath="/cash-flow-statement" />
         
         <div className="max-w-xl mx-auto space-y-6">
             <BalanceInfoBox label="期首残高" amount={cashFlowStatement.beginningCashBalance} borderColorClass="border-slate-500" />

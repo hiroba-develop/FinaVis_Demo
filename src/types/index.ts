@@ -45,6 +45,7 @@ export interface SimpleTransaction {
 export interface TransactionTemplate {
   id: string;
   label: string;
+  category: string;
   debitAccountId: number;
   creditAccountId: number;
 }

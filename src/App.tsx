@@ -15,9 +15,14 @@ import CashFlowStatement from "./pages/CashFlowStatement";
 import TransactionHistory from "./pages/TransactionHistory";
 import EditTransaction from "./pages/EditTransaction";
 import Help from "./pages/Help";
+import FinancialHistory from "./pages/FinancialHistory"; // FinancialHistoryをインポート
+// import Settings from "./pages/Settings"; // Settingsをインポート
 import { TransactionProvider } from "./contexts/TransactionContext";
 import { DemoOptionsProvider, useDemoOptions } from "./contexts/DemoOptionsContext";
-import { useEffect } from "react";
+import { FiscalPeriodProvider, useFiscalPeriod } from "./contexts/FiscalPeriodContext";
+import { HistoryProvider } from "./contexts/HistoryContext"; // HistoryProviderをインポート
+import { useEffect, useState, useCallback } from "react"; // useCallbackを追加
+import type { BalanceSheet as BalanceSheetType } from "./types";
 
 // スクロールをトップに戻すコンポーネント
 const ScrollToTop = () => {
@@ -77,7 +82,7 @@ const AppContent: React.FC = () => {
           }
         />
         <Route
-          path="/balance-sheet"
+          path="/balance-sheet/:periodIndex?"
           element={
             <ProtectedRoute>
               <Layout>
@@ -87,7 +92,7 @@ const AppContent: React.FC = () => {
           }
         />
         <Route
-          path="/income-statement"
+          path="/income-statement/:periodIndex?"
           element={
             <ProtectedRoute>
               <Layout>
@@ -97,7 +102,7 @@ const AppContent: React.FC = () => {
           }
         />
         <Route
-          path="/cash-flow-statement"
+          path="/cash-flow-statement/:periodIndex?"
           element={
             <ProtectedRoute>
               <Layout>
@@ -136,6 +141,26 @@ const AppContent: React.FC = () => {
             </ProtectedRoute>
           }
         />
+        <Route
+          path="/financial-history"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <FinancialHistory />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        {/* <Route
+          path="/settings"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Settings />
+              </Layout>
+            </ProtectedRoute>
+          }
+        /> */}
          {/* Not Found */}
         <Route path="*" element={<Navigate to="/" />} />
       </Routes>
@@ -143,9 +168,41 @@ const AppContent: React.FC = () => {
   );
 };
 
-const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+const TransactionProviderWithHooks: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { useSampleData } = useDemoOptions();
-  return <TransactionProvider useSampleData={useSampleData}>{children}</TransactionProvider>;
+  const { startDate } = useFiscalPeriod();
+  const [openingRetainedEarnings, setOpeningRetainedEarnings] = useState(0);
+
+  const handlePeriodClose = useCallback((closingBalanceSheet: BalanceSheetType) => {
+    setOpeningRetainedEarnings(closingBalanceSheet.equity.利益剰余金);
+  }, []);
+
+  return (
+    <TransactionProvider
+      key={startDate ? startDate.toISOString() : 'initial'}
+      useSampleData={useSampleData}
+      initialRetainedEarnings={openingRetainedEarnings}
+      onPeriodClose={handlePeriodClose}
+    >
+      {children}
+    </TransactionProvider>
+  );
+};
+
+const AppProviders: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  return (
+    <AuthProvider>
+      <DemoOptionsProvider>
+        <HistoryProvider>
+          <FiscalPeriodProvider>
+            <TransactionProviderWithHooks>
+              {children}
+            </TransactionProviderWithHooks>
+          </FiscalPeriodProvider>
+        </HistoryProvider>
+      </DemoOptionsProvider>
+    </AuthProvider>
+  );
 };
 
 function App() {
@@ -153,13 +210,9 @@ function App() {
 
   return (
     <Router basename={basename}>
-      <AuthProvider>
-        <DemoOptionsProvider>
-          <AppProviders>
-            <AppContent />
-          </AppProviders>
-        </DemoOptionsProvider>
-      </AuthProvider>
+      <AppProviders>
+        <AppContent />
+      </AppProviders>
     </Router>
   );
 }

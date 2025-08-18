@@ -121,7 +121,28 @@ const TransactionForm: React.FC = () => {
                 <td className="px-2 sm:px-4 py-2 whitespace-nowrap min-w-[150px]">
                   <select value={entry.accountId} onChange={e => handleEntryChange(index, 'accountId', Number(e.target.value))} className="w-full rounded-md border-gray-300 shadow-sm focus:border-accent focus:ring-accent sm:text-sm">
                     <option value="">選択してください</option>
-                    {accountsMaster.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                    {Object.entries(
+                      accountsMaster
+                        .sort((a, b) => a.id - b.id)
+                        .reduce((acc, account) => {
+                          const key = {
+                            asset: '資産',
+                            liability: '負債',
+                            equity: '純資産',
+                            revenue: '収益',
+                            expense: '費用',
+                          }[account.type];
+                          if (!acc[key]) {
+                            acc[key] = [];
+                          }
+                          acc[key].push(account);
+                          return acc;
+                        }, {} as Record<string, typeof accountsMaster>)
+                    ).map(([category, accounts]) => (
+                      <optgroup key={category} label={category}>
+                        {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                      </optgroup>
+                    ))}
                   </select>
                 </td>
                 <td className="px-2 sm:px-4 py-2 whitespace-nowrap">
@@ -155,7 +176,28 @@ const TransactionForm: React.FC = () => {
                   <label htmlFor={`account-${index}`} className="block text-xs font-medium text-gray-500 mb-1">勘定科目</label>
                   <select id={`account-${index}`} value={entry.accountId} onChange={e => handleEntryChange(index, 'accountId', Number(e.target.value))} className="w-full rounded-md border-gray-300 shadow-sm focus:border-accent focus:ring-accent sm:text-sm">
                       <option value="">選択してください</option>
-                      {accountsMaster.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                      {Object.entries(
+                        accountsMaster
+                          .sort((a, b) => a.id - b.id)
+                          .reduce((acc, account) => {
+                            const key = {
+                              asset: '資産',
+                              liability: '負債',
+                              equity: '純資産',
+                              revenue: '収益',
+                              expense: '費用',
+                            }[account.type];
+                            if (!acc[key]) {
+                              acc[key] = [];
+                            }
+                            acc[key].push(account);
+                            return acc;
+                          }, {} as Record<string, typeof accountsMaster>)
+                      ).map(([category, accounts]) => (
+                        <optgroup key={category} label={category}>
+                          {accounts.map(acc => <option key={acc.id} value={acc.id}>{acc.name}</option>)}
+                        </optgroup>
+                      ))}
                   </select>
               </div>
               <div className="grid grid-cols-2 gap-4">

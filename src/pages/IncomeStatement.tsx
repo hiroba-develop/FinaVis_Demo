@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
+import { useHistory } from '../contexts/HistoryContext';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, ReferenceLine } from 'recharts';
 import TooltipIcon from '../components/TooltipIcon';
+import PeriodSelector from '../components/PeriodSelector'; // PeriodSelectorをインポート
 
 interface ReportRowProps {
   label: string;
@@ -160,7 +162,9 @@ const ChartBox: React.FC<{ label: string; amount: number; percentage: number; co
 };
 
 const IncomeStatement: React.FC = () => {
-  const { incomeStatement } = useTransactions();
+  const { incomeStatement: currentIncomeStatement } = useTransactions();
+  const { history } = useHistory();
+  const { periodIndex } = useParams<{ periodIndex?: string }>();
   const navigate = useNavigate();
   const [chartType, setChartType] = useState('box');
   const [waterfallView, setWaterfallView] = useState('simple');
@@ -174,6 +178,28 @@ const IncomeStatement: React.FC = () => {
     handleResize();
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  const isHistoryView = periodIndex !== undefined;
+  const historyIndex = isHistoryView ? parseInt(periodIndex, 10) : -1;
+
+  let incomeStatement;
+  let pageTitle = "損益計算書";
+
+  if (isHistoryView) {
+    if (historyIndex >= 0 && historyIndex < history.length) {
+      const historicalData = history[historyIndex];
+      incomeStatement = historicalData.incomeStatement;
+      pageTitle = `${historicalData.periodString} の損益計算書`;
+    } else {
+      return <div>指定された期間のデータが見つかりません。</div>;
+    }
+  } else {
+    incomeStatement = currentIncomeStatement;
+  }
+
+  if (!incomeStatement) {
+    return <div>損益計算書データを読み込んでいます...</div>;
+  }
 
   // --- Calculations for Income Statement ---
   const totalRevenue = Object.values(incomeStatement.収益).reduce((s, v) => s + v, 0);
@@ -274,18 +300,20 @@ const IncomeStatement: React.FC = () => {
   return (
     <div className="container mx-auto px-2 sm:px-4 py-8">
         <div className="bg-gray-50 rounded-xl shadow-lg p-4 md:p-8">
-            <div className="md:relative mb-8">
+            <div className="md:relative mb-4">
                 <button 
-                    onClick={() => navigate(-1)} 
+                    onClick={() => navigate(isHistoryView ? '/financial-history' : '/')} 
                     className="mb-4 md:mb-0 md:absolute md:top-1/2 md:-translate-y-1/2 md:left-0 bg-gray-200 text-gray-700 font-bold py-2 px-4 rounded-lg hover:bg-gray-300 transition duration-300 flex items-center text-sm"
                 >
                     <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clipRule="evenodd" />
                     </svg>
-                    戻る
+                    {isHistoryView ? '履歴一覧へ' : '戻る'}
                 </button>
-                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">損益計算書</h1>
+                <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 text-center">{pageTitle}</h1>
             </div>
+
+            <PeriodSelector basePath="/income-statement" />
 
             <div className="max-w-3xl mx-auto space-y-2">
                 <div className="space-y-2">

@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
+import { useFiscalPeriod } from '../contexts/FiscalPeriodContext'; // FiscalPeriodContextをインポート
+import { useHistory } from '../contexts/HistoryContext'; // useHistoryをインポート
 import TransactionForm from '../components/TransactionForm';
 import SimpleTransactionForm from '../components/SimpleTransactionForm';
 
@@ -32,31 +34,180 @@ const IconLightBulb: React.FC<{className?: string}> = ({className}) => (
 );
 
 const Dashboard: React.FC = () => {
-  const { transactions, balanceSheet, incomeStatement, cashFlowStatement } = useTransactions();
+  const { transactions, balanceSheet, incomeStatement, cashFlowStatement, addTransaction, accountsMaster, recordClosingBalanceSheet } = useTransactions();
+  const { periodString, advanceToNextPeriod, startDate, endDate, openSettingsModal } = useFiscalPeriod(); // advanceToNextPeriodを取得
+  const { addHistoricalData } = useHistory(); // addHistoricalDataを取得
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [formType, setFormType] = useState<'simple' | 'journal'>('simple');
   const [isExplanationOpen, setIsExplanationOpen] = useState(false);
   
-  const cashInBS = balanceSheet.assets.流動資産['現金'] || 0;
+  const handleClosePeriod = () => {
+    // This check is important for when the button is clicked.
+    if (!startDate || !endDate) {
+        alert("会計期間が設定されていません。");
+        return;
+    }
+    // 1. Confirmation Dialog
+    if (!window.confirm("決算を締めて、次の会計期間に進みますか？この操作は元に戻せません。")) {
+      return;
+    }
 
-  // --- Calculations for Income Statement ---
+    // ★ Add data to history before closing
+    addHistoricalData({
+      periodString,
+      startDate,
+      endDate,
+      balanceSheet,
+      incomeStatement,
+      cashFlowStatement,
+    });
+
+    // 2. Create Closing Journal Entry
+    const closingEntries = [];
+    const retainedEarningsAccount = accountsMaster.find(a => a.name === '利益剰余金');
+    if (!retainedEarningsAccount) {
+        console.error("利益剰余金勘定が見つかりません。");
+        return;
+    }
+
+    // --- Close all revenue accounts to Retained Earnings ---
+    const allRevenueAccounts = [
+        ...Object.keys(incomeStatement.収益),
+        ...Object.keys(incomeStatement.営業外収益),
+        ...Object.keys(incomeStatement.特別利益)
+    ];
+
+    for (const accountName of allRevenueAccounts) {
+        const account = accountsMaster.find(a => a.name === accountName);
+        const balance = incomeStatement.収益[accountName] || 
+                      incomeStatement.営業外収益[accountName] || 
+                      incomeStatement.特別利益[accountName] || 0;
+
+        if (account && balance !== 0) {
+            closingEntries.push({
+                accountId: account.id,
+                debitAmount: balance, // Debit to zero out the credit balance
+                creditAmount: 0,
+            });
+        }
+    }
+
+    // --- Close all expense accounts to Retained Earnings ---
+    const allExpenseAccounts = [
+        ...Object.keys(incomeStatement.費用.売上原価),
+        ...Object.keys(incomeStatement.費用.販売費及び一般管理費),
+        ...Object.keys(incomeStatement.費用.営業外費用),
+        ...Object.keys(incomeStatement.費用.特別損失),
+        ...Object.keys(incomeStatement.費用.法人税等)
+    ];
+
+    for (const accountName of allExpenseAccounts) {
+        const account = accountsMaster.find(a => a.name === accountName);
+        const balance = incomeStatement.費用.売上原価[accountName] ||
+                      incomeStatement.費用.販売費及び一般管理費[accountName] ||
+                      incomeStatement.費用.営業外費用[accountName] ||
+                      incomeStatement.費用.特別損失[accountName] ||
+                      incomeStatement.費用.法人税等[accountName] || 0;
+        
+        if (account && balance !== 0) {
+            closingEntries.push({
+                accountId: account.id,
+                debitAmount: 0,
+                creditAmount: balance, // Credit to zero out the debit balance
+            });
+        }
+    }
+    
+    // --- Post Net Income to Retained Earnings ---
+    closingEntries.push({
+      accountId: retainedEarningsAccount.id,
+      debitAmount: 0,
+      creditAmount: incomeStatement.当期純利益, // Credit Retained Earnings with the net income
+    });
+    
+    // Create the closing transaction
+    const closingTransaction = {
+      transactionDate: new Date().toISOString().split('T')[0], // Use today's date
+      description: '決算整理仕訳（損益振替）',
+      entries: closingEntries.map((e, _index) => ({ // index -> _index
+        ...e,
+        entryId: 0, // Temp ID
+        transactionId: 0, // Temp ID
+      }))
+    };
+
+    addTransaction(closingTransaction);
+
+    // In a real app, this might involve storing the closing B/S in a more persistent way.
+    recordClosingBalanceSheet();
+
+    // 3. Advance to the next fiscal period
+    advanceToNextPeriod();
+
+    alert("決算処理が完了し、次の会計期間に進みました。");
+  };
+
+  // Guard clause: If the period is not set, render a message and stop.
+  if (!startDate || !endDate) {
+    return (
+        <div className="container mx-auto px-2 sm:px-4 py-8">
+            {/* Display "Period Not Set" message and button */}
+            <div className="bg-white rounded-lg shadow-lg mb-8 p-4 md:p-6 text-center">
+                 <h2 className="text-xl sm:text-2xl font-bold text-gray-800">会計期間が設定されていません</h2>
+                 <p className="text-gray-600 mt-2">会計を開始するには、まず期首日を設定してください。</p>
+                 <button 
+                     onClick={openSettingsModal} 
+                     className="mt-4 bg-accent text-white font-bold py-2 px-6 rounded-lg hover:bg-accent-dark transition duration-300 shadow-md"
+                 >
+                     期首日を設定する
+                 </button>
+             </div>
+        </div>
+    );
+  }
+
+  // --- Calculations for dashboard ---
+  // This block now only runs if startDate and endDate are valid Dates.
+  const cashInBS = balanceSheet.assets.流動資産['現金'] || 0;
   const totalRevenue = Object.values(incomeStatement.収益).reduce((s, v) => s + v, 0);
   const totalCOGS = Object.values(incomeStatement.費用.売上原価).reduce((s, v) => s + v, 0);
   const grossProfit = totalRevenue - totalCOGS;
-
   const totalSGA = Object.values(incomeStatement.費用.販売費及び一般管理費).reduce((s, v) => s + v, 0);
   const operatingIncome = grossProfit - totalSGA;
-
-  // Determine if the accounting period is closed
   const retainedEarningsAccountId = 15;
   const closingTransaction = transactions.find(tx => tx.description === '決算整理仕訳（損益振替）');
   const isClosed = !!closingTransaction;
-
-  // Get the finalized income from the closing entry if it exists
   const finalPeriodIncome = closingTransaction?.entries.find(e => e.accountId === retainedEarningsAccountId)?.creditAmount || 0;
+  const openingRetainedEarnings = balanceSheet.equity.利益剰余金 - incomeStatement.当期純利益;
 
   return (
     <div className="container mx-auto px-2 sm:px-4 py-8">
+      {/* --- Fiscal Period Display --- */}
+      <div className="bg-white rounded-lg shadow-lg mb-8 p-4 md:p-6 flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+        <div>
+          <div className="flex items-center gap-3">
+            <h2 className="text-xl sm:text-2xl font-bold text-gray-800">会計期間</h2>
+            <button onClick={openSettingsModal} className="text-accent hover:text-accent-dark">
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+            </button>
+          </div>
+          <p className="text-gray-600 font-semibold text-center sm:text-left">{periodString}</p>
+        </div>
+        <div className="w-full sm:w-auto flex justify-center">
+            <button 
+                onClick={handleClosePeriod}
+                // Disable button if period is not set
+                disabled={!startDate}
+                className="bg-accent text-white font-bold py-2 px-6 rounded-lg hover:bg-accent-dark transition duration-300 shadow-md disabled:bg-gray-400"
+            >
+                決算を締める
+            </button>
+        </div>
+      </div>
+
       <div className="bg-white rounded-lg shadow-lg mb-8">
         <div className="p-4 md:p-8">
           <div className="flex justify-between items-center cursor-pointer" onClick={() => setIsFormOpen(!isFormOpen)}>
@@ -136,7 +287,7 @@ const Dashboard: React.FC = () => {
                     <div className={`flex justify-between items-center font-bold text-lg p-3 rounded-md transition-colors mt-2 ${isClosed ? 'bg-slate-100' : (isExplanationOpen ? 'bg-sky-50 group-hover:bg-sky-100' : '')}`}>
                         <div className="flex items-center gap-2">
                             {isExplanationOpen && !isClosed && <IconConnectionDot className="text-sky-500" />}
-                            <span>{isClosed ? '期間確定利益:' : '当期純利益:'}</span>
+                            <span>{isClosed ? '期間確定利益:' : '期間純利益:'}</span>
                         </div>
                         <span className={isClosed ? 'text-slate-700' : (isExplanationOpen ? 'text-sky-700' : '')}>
                           {isClosed ? formatCurrency(finalPeriodIncome) : formatCurrency(incomeStatement.当期純利益)}円
@@ -178,13 +329,15 @@ const Dashboard: React.FC = () => {
                         >
                             <div className="flex items-center gap-2">
                                 {isExplanationOpen && !isClosed && <IconConnectionDot className="text-sky-500" />}
-                                <span>利益剰余金:</span>
+                                <span>利益剰余金 (期首):</span>
                             </div>
-                            <span>{formatCurrency(balanceSheet.equity.利益剰余金)}円</span>
+                            <span>{formatCurrency(openingRetainedEarnings)}円</span>
                         </div>
                         {!isClosed && (
-                            <div className="text-right text-sky-700 text-sm font-semibold">
-                                (+ {formatCurrency(incomeStatement.当期純利益)}円 が加算予定)
+                            <div className="text-right text-sky-700 text-sm font-semibold border-t pt-1 mt-1">
+                                + 期間純利益: {formatCurrency(incomeStatement.当期純利益)}円
+                                <hr className="my-1 border-sky-200"/>
+                                = 期末残高: {formatCurrency(balanceSheet.equity.利益剰余金)}円
                             </div>
                         )}
                     </div>

@@ -69,10 +69,22 @@ const SimpleTransactionForm: React.FC = () => {
           onChange={handleTemplateChange}
           className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-accent focus:ring-accent sm:text-sm"
         >
-          {transactionTemplates.map((template) => (
-            <option key={template.id} value={template.id}>
-              {template.label}
-            </option>
+          {Object.entries(
+            transactionTemplates.reduce((acc, template) => {
+              if (!acc[template.category]) {
+                acc[template.category] = [];
+              }
+              acc[template.category].push(template);
+              return acc;
+            }, {} as Record<string, typeof transactionTemplates>)
+          ).map(([category, templates]) => (
+            <optgroup key={category} label={category}>
+              {templates.map((template) => (
+                <option key={template.id} value={template.id}>
+                  {template.label}
+                </option>
+              ))}
+            </optgroup>
           ))}
         </select>
       </div>

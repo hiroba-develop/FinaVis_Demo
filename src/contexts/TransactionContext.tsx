@@ -1,5 +1,6 @@
 import  { createContext, useContext, useState, type ReactNode, useEffect } from 'react';
 import type { Transaction, BalanceSheet, IncomeStatement, CashFlowStatement, Account, SimpleTransaction, TransactionTemplate } from '../types';
+import { useFiscalPeriod } from './FiscalPeriodContext'; // FiscalPeriodContextをインポート
 
 interface TransactionContextType {
   transactions: Transaction[];
@@ -11,6 +12,7 @@ interface TransactionContextType {
   cashFlowStatement: CashFlowStatement;
   accountsMaster: Account[];
   transactionTemplates: TransactionTemplate[];
+  recordClosingBalanceSheet: () => void; // recordClosingBalanceSheetを追加
 }
 
 const TransactionContext = createContext<TransactionContextType | undefined>(undefined);
@@ -50,7 +52,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 0,
     userId: 1,
-    transactionDate: '2023-04-01',
+    transactionDate: '2024-04-01',
     description: '期首現金残高',
     entries: [
       { entryId: 0, transactionId: 0, accountId: 1, debitAmount: 200000, creditAmount: 0 },
@@ -62,7 +64,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 1,
     userId: 1,
-    transactionDate: '2023-04-01',
+    transactionDate: '2024-04-01',
     description: '事業開始のため、資本金1,000,000円を現金で受け入れた',
     entries: [
       { entryId: 1, transactionId: 1, accountId: 1, debitAmount: 1000000, creditAmount: 0 },
@@ -72,7 +74,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 2,
     userId: 1,
-    transactionDate: '2023-04-05',
+    transactionDate: '2024-04-05',
     description: '商品を500,000円で現金で仕入れた',
     entries: [
       { entryId: 3, transactionId: 2, accountId: 8, debitAmount: 500000, creditAmount: 0 }, // 仕入
@@ -82,7 +84,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 3,
     userId: 1,
-    transactionDate: '2023-04-15',
+    transactionDate: '2024-04-15',
     description: '商品を800,000円で売上げ、代金は掛けとした',
     entries: [
       { entryId: 5, transactionId: 3, accountId: 2, debitAmount: 800000, creditAmount: 0 }, // 売掛金
@@ -92,7 +94,7 @@ const sampleTransactions: Transaction[] = [
     {
     transactionId: 4,
     userId: 1,
-    transactionDate: '2023-04-25',
+    transactionDate: '2024-04-25',
     description: '従業員の給料200,000円を現金で支払った',
     entries: [
       { entryId: 7, transactionId: 4, accountId: 9, debitAmount: 200000, creditAmount: 0 }, // 給料
@@ -102,7 +104,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 5,
     userId: 1,
-    transactionDate: '2023-04-30',
+    transactionDate: '2024-04-30',
     description: '備品300,000円を現金で購入した',
     entries: [
       { entryId: 9, transactionId: 5, accountId: 10, debitAmount: 300000, creditAmount: 0 }, // 備品
@@ -112,7 +114,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 6,
     userId: 1,
-    transactionDate: '2023-05-01',
+    transactionDate: '2024-05-01',
     description: '銀行から長期資金として500,000円を借り入れた',
     entries: [
       { entryId: 11, transactionId: 6, accountId: 1, debitAmount: 500000, creditAmount: 0 }, // 現金
@@ -122,7 +124,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 7,
     userId: 1,
-    transactionDate: '2023-05-10',
+    transactionDate: '2024-05-10',
     description: '事務用品50,000円を掛けで購入した',
     entries: [
       { entryId: 13, transactionId: 7, accountId: 11, debitAmount: 50000, creditAmount: 0 }, // 消耗品費
@@ -132,7 +134,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 8,
     userId: 1,
-    transactionDate: '2023-06-01',
+    transactionDate: '2024-06-01',
     description: '受取利息1,000円を現金で受け取った',
     entries: [
       { entryId: 15, transactionId: 8, accountId: 1, debitAmount: 1000, creditAmount: 0 },
@@ -142,7 +144,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 9,
     userId: 1,
-    transactionDate: '2023-06-05',
+    transactionDate: '2024-06-05',
     description: '支払利息2,000円を現金で支払った',
     entries: [
       { entryId: 17, transactionId: 9, accountId: 12, debitAmount: 2000, creditAmount: 0 },
@@ -152,7 +154,7 @@ const sampleTransactions: Transaction[] = [
   {
     transactionId: 10,
     userId: 1,
-    transactionDate: '2023-06-10',
+    transactionDate: '2024-06-10',
     description: '使用していた備品（取得価額50,000円）を売却し、現金60,000円を受け取った',
     entries: [
       // This is a simplified entry for demonstration
@@ -164,7 +166,7 @@ const sampleTransactions: Transaction[] = [
     {
     transactionId: 11,
     userId: 1,
-    transactionDate: '2023-06-15',
+    transactionDate: '2024-06-15',
     description: '災害により倉庫が一部損壊し、15,000円の損失を計上した',
     entries: [
       { entryId: 22, transactionId: 11, accountId: 18, debitAmount: 15000, creditAmount: 0 },
@@ -173,11 +175,13 @@ const sampleTransactions: Transaction[] = [
   },
 ];
 
-// 仮の勘定科目マスタ
+// 仮の勘定科目マスタ (初学者向けに簡略化)
 const accountsMaster: Account[] = [
   { id: 1, name: '現金', type: 'asset', sub_type: 'current' },
+  { id: 19, name: '普通預金', type: 'asset', sub_type: 'current' },
   { id: 2, name: '売掛金', type: 'asset', sub_type: 'current' },
-  { id: 3, name: '商品', type: 'asset', sub_type: 'current' }, // 今回は未使用
+  { id: 10, name: '備品', type: 'asset', sub_type: 'fixed' },
+  { id: 30, name: '減価償却累計額', type: 'asset', sub_type: 'fixed' },
   { id: 4, name: '買掛金', type: 'liability', sub_type: 'current' },
   { id: 5, name: '借入金', type: 'liability', sub_type: 'fixed' },
   { id: 6, name: '資本金', type: 'equity', sub_type: null },
@@ -185,35 +189,56 @@ const accountsMaster: Account[] = [
   { id: 7, name: '売上', type: 'revenue', sub_type: null },
   { id: 8, name: '仕入', type: 'expense', sub_type: 'cogs' },
   { id: 9, name: '給料', type: 'expense', sub_type: 'sga' },
-  { id: 10, name: '備品', type: 'asset', sub_type: 'fixed' },
-  { id: 11, name: '消耗品費', type: 'expense', sub_type: 'sga' },
-  { id: 12, name: '支払利息', type: 'expense', sub_type: 'non-operating-expense' },
-  { id: 13, name: '法人税等', type: 'expense', sub_type: 'tax' },
-  { id: 14, name: '未払法人税等', type: 'liability', sub_type: 'current' },
-  { id: 16, name: '受取利息', type: 'revenue', sub_type: 'non-operating-revenue' },
-  { id: 17, name: '固定資産売却益', type: 'revenue', sub_type: 'extraordinary-profit' },
-  { id: 18, name: '災害損失', type: 'expense', sub_type: 'extraordinary-loss' },
+  { id: 23, name: '地代家賃', type: 'expense', sub_type: 'sga' },
+  { id: 24, name: '水道光熱費', type: 'expense', sub_type: 'sga' },
+  { id: 11, name: '消耗品費', type: 'expense', sub_type: 'sga' }, // その他経費として利用
+  { id: 29, name: '減価償却費', type: 'expense', sub_type: 'sga' },
 ];
 
 const transactionTemplates: TransactionTemplate[] = [
-    { id: 'revenue-cash', label: '現金での売上', debitAccountId: 1, creditAccountId: 7 },
-    { id: 'revenue-receivable', label: '掛けでの売上', debitAccountId: 2, creditAccountId: 7 },
-    { id: 'expense-cogs-cash', label: '現金での仕入', debitAccountId: 8, creditAccountId: 1 },
-    { id: 'expense-cogs-payable', label: '掛けでの仕入', debitAccountId: 8, creditAccountId: 4 },
-    { id: 'expense-sga-cash', label: '現金での経費支払い（販売管理費）', debitAccountId: 11, creditAccountId: 1 },
-    { id: 'expense-sga-payable', label: '掛けでの経費支払い（販売管理費）', debitAccountId: 11, creditAccountId: 4 },
-    { id: 'asset-purchase-cash', label: '固定資産を現金で購入', debitAccountId: 10, creditAccountId: 1 },
-    { id: 'loan-repayment-cash', label: '借入金を現金で返済', debitAccountId: 5, creditAccountId: 1 },
-    { id: 'financing-loan', label: '銀行からの借入', debitAccountId: 1, creditAccountId: 5 },
-    { id: 'financing-capital', label: '株主からの出資', debitAccountId: 1, creditAccountId: 6 },
-    { id: 'tax-payment-cash', label: '法人税等の現金での支払い', debitAccountId: 13, creditAccountId: 1 },
-    { id: 'interest-income-cash', label: '受取利息の現金での受け取り', debitAccountId: 1, creditAccountId: 16 },
-    { id: 'asset-sale-gain-cash', label: '固定資産売却益の現金での受け取り', debitAccountId: 1, creditAccountId: 17 },
-    { id: 'disaster-loss-cash', label: '災害損失の現金での処理', debitAccountId: 18, creditAccountId: 1 },
+    // 売上
+    { id: 'revenue-cash', label: '現金での売上', category: '売上', debitAccountId: 1, creditAccountId: 7 },
+    { id: 'revenue-receivable', label: '掛けでの売上', category: '売上', debitAccountId: 2, creditAccountId: 7 },
+    { id: 'receivable-collection', label: '売掛金の回収', category: '売上', debitAccountId: 1, creditAccountId: 2 }, // 現金での回収をデフォルトに
+
+    // 仕入
+    { id: 'purchase-cash', label: '現金での仕入', category: '仕入', debitAccountId: 8, creditAccountId: 1 },
+    { id: 'purchase-payable', label: '掛けでの仕入', category: '仕入', debitAccountId: 8, creditAccountId: 4 },
+    { id: 'payable-payment', label: '買掛金の支払い', category: '仕入', debitAccountId: 4, creditAccountId: 1 }, // 現金での支払いをデフォルトに
+
+    // 経費
+    { id: 'expense-salary', label: '給料の支払い', category: '経費', debitAccountId: 9, creditAccountId: 1 },
+    { id: 'expense-rent', label: '家賃の支払い', category: '経費', debitAccountId: 23, creditAccountId: 1 },
+    { id: 'expense-utilities', label: '光熱費の支払い', category: '経費', debitAccountId: 24, creditAccountId: 1 },
+    { id: 'expense-other', label: 'その他経費の支払い', category: '経費', debitAccountId: 11, creditAccountId: 1 },
+
+    // 資産
+    { id: 'asset-purchase', label: '設備・備品の購入', category: '資産', debitAccountId: 10, creditAccountId: 1 }, // 現金での購入をデフォルトに
+    { id: 'asset-depreciation', label: '減価償却', category: '資産', debitAccountId: 29, creditAccountId: 30 },
+
+    // 資金
+    { id: 'loan-borrow', label: '借入', category: '資金', debitAccountId: 19, creditAccountId: 5 }, // 普通預金への入金をデフォルトに
+    { id: 'loan-repay', label: '借入金の返済', category: '資金', debitAccountId: 5, creditAccountId: 1 },
+    { id: 'capital-invest', label: '出資', category: '資金', debitAccountId: 1, creditAccountId: 6 },
+
+    // 現金・預金
+    { id: 'cash-deposit', label: '現金を預金に預ける', category: '現金・預金', debitAccountId: 19, creditAccountId: 1 },
+    { id: 'bank-withdrawal', label: '預金から現金を引き出す', category: '現金・預金', debitAccountId: 1, creditAccountId: 19 },
 ];
 
 
-export const TransactionProvider = ({ children, useSampleData }: { children: ReactNode, useSampleData: boolean }) => {
+export const TransactionProvider = ({ 
+  children, 
+  useSampleData,
+  initialRetainedEarnings = 0,
+  onPeriodClose,
+}: { 
+  children: ReactNode, 
+  useSampleData: boolean,
+  initialRetainedEarnings?: number,
+  onPeriodClose?: (closingBalanceSheet: BalanceSheet) => void,
+}) => {
+  const { startDate, endDate } = useFiscalPeriod();
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [balanceSheet, setBalanceSheet] = useState<BalanceSheet>(initialBalanceSheet);
   const [incomeStatement, setIncomeStatement] = useState<IncomeStatement>(initialIncomeStatement);
@@ -224,11 +249,28 @@ export const TransactionProvider = ({ children, useSampleData }: { children: Rea
   }, [useSampleData]);
 
   const calculateFinancials = (currentTransactions: Transaction[]) => {
-    // --- B/S and P/L Calculation (existing logic) ---
+    // --- Return empty statements if the fiscal period is not set ---
+    if (!startDate || !endDate) {
+      setBalanceSheet(initialBalanceSheet);
+      setIncomeStatement(initialIncomeStatement);
+      setCashFlowStatement(initialCashFlowStatement);
+      return;
+    }
+
+    // --- Filter transactions for the current fiscal period ---
+    const periodTransactions = currentTransactions.filter(tx => {
+        const txDate = new Date(tx.transactionDate);
+        return txDate >= startDate && txDate <= endDate;
+    });
+
+    // --- B/S and P/L Calculation ---
     const bs: BalanceSheet = JSON.parse(JSON.stringify(initialBalanceSheet));
     const is: IncomeStatement = JSON.parse(JSON.stringify(initialIncomeStatement));
+    
+    // Set the opening balance for retained earnings
+    bs.equity.利益剰余金 = initialRetainedEarnings;
 
-    currentTransactions.forEach(tx => {
+    periodTransactions.forEach(tx => {
       tx.entries.forEach(entry => {
         const account = accountsMaster.find(a => a.id === entry.accountId);
         if (!account) return;
@@ -286,6 +328,7 @@ export const TransactionProvider = ({ children, useSampleData }: { children: Rea
     // 利益剰余金の計算を修正：期首の利益剰余金（今回は0と仮定）＋当期純利益
     // ※資本金の初期値は bs.equity.資本金 に入っている
     const closingRetainedEarnings = is.当期純利益;
+    // Add the net income for the period to the initial retained earnings.
     bs.equity.利益剰余金 += closingRetainedEarnings;
 
     bs.equity.純資産合計 = bs.equity.資本金 + bs.equity.利益剰余金;
@@ -297,7 +340,7 @@ export const TransactionProvider = ({ children, useSampleData }: { children: Rea
     let financingActivities = 0;
     const cashAccountId = 1;
 
-    currentTransactions.forEach(tx => {
+    periodTransactions.forEach(tx => {
         const cashEntry = tx.entries.find(e => e.accountId === cashAccountId);
         if (!cashEntry) return; // Not a cash transaction
 
@@ -351,9 +394,16 @@ export const TransactionProvider = ({ children, useSampleData }: { children: Rea
     setCashFlowStatement(cf);
   };
 
+  // Function to be called from Dashboard to save the B/S before advancing the period.
+  const recordClosingBalanceSheet = () => {
+    if (onPeriodClose) {
+      onPeriodClose(balanceSheet);
+    }
+  };
+
   useEffect(() => {
     calculateFinancials(transactions);
-  }, [transactions]);
+  }, [transactions, startDate, endDate, initialRetainedEarnings]); // Add dependencies
 
   const addTransaction = (transaction: Omit<Transaction, 'transactionId' | 'userId'>) => {
     const newTransaction: Transaction = {
@@ -413,6 +463,7 @@ export const TransactionProvider = ({ children, useSampleData }: { children: Rea
     cashFlowStatement,
     accountsMaster,
     transactionTemplates,
+    recordClosingBalanceSheet, // Expose the new function
   };
 
   return (

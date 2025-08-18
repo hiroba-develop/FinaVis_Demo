@@ -1,12 +1,16 @@
 import { useState, type ReactNode } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { useFiscalPeriod } from "../contexts/FiscalPeriodContext"; // useFiscalPeriodをインポート
 import FinaVisLogo from '/FinaVis_logo_icon_moji_transparent.png';
+import FiscalPeriodSettingsModal from "./FiscalPeriodSettingsModal"; // モーダルをインポート
 
 const navigationItems = [
   { name: "ダッシュボード", path: "/" },
   { name: "取引履歴", path: "/transaction-history" },
+  { name: "財務履歴", path: "/financial-history" }, // 財務履歴を追加
   { name: "ヘルプ", path: "/help" },
+  { name: "設定", path: "#" }, // パスを無効化
 ];
 
 interface LayoutProps {
@@ -17,6 +21,7 @@ const Layout = ({ children }: LayoutProps) => {
   const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+  const { openSettingsModal } = useFiscalPeriod();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   const handleLogout = () => {
@@ -42,6 +47,7 @@ const Layout = ({ children }: LayoutProps) => {
                   <Link
                     key={item.name}
                     to={item.path}
+                    onClick={item.name === '設定' ? (e) => { e.preventDefault(); openSettingsModal(); } : undefined}
                     className={`px-3 py-2 rounded-md text-sm font-medium ${
                       location.pathname === item.path
                         ? "bg-accent text-white"
@@ -80,6 +86,7 @@ const Layout = ({ children }: LayoutProps) => {
                 <Link
                   key={item.name}
                   to={item.path}
+                  onClick={item.name === '設定' ? (e) => { e.preventDefault(); setIsMobileMenuOpen(false); openSettingsModal(); } : () => setIsMobileMenuOpen(false)}
                   className={`block px-3 py-2 rounded-md text-base font-medium ${
                     location.pathname === item.path
                       ? "bg-accent text-white"
@@ -106,6 +113,9 @@ const Layout = ({ children }: LayoutProps) => {
           {children}
         </div>
       </main>
+
+      {/* Settings Modal */}
+      <FiscalPeriodSettingsModal />
     </div>
   );
 };
