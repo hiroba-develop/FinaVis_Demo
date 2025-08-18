@@ -58,7 +58,7 @@ export const FiscalPeriodProvider = ({ children }: { children: ReactNode }) => {
   const closeSettingsModal = () => setIsSettingsModalOpen(false);
 
   const setStartDate = (date: Date) => {
-    const effectiveStartDate = new Date(date);
+    let effectiveStartDate = new Date(date);
 
     const firstDateToSet = !originalStartDate ? effectiveStartDate : originalStartDate;
     if (!originalStartDate) {
