@@ -281,8 +281,8 @@ const Dashboard: React.FC = () => {
                     下のカードで、特に重要な2つのつながりをハイライトしています。
                   </p>
                   <ul className="list-disc list-inside text-sm space-y-1">
-                    <li>損益計算書（P/L）の<span className="font-bold text-sky-700">当期純利益</span>（今期稼いだお金）が、貸借対照表（B/S）の<span className="font-bold text-sky-700">利益剰余金</span>（会社に貯まったお金）として積み上がること</li>
-                    <li>キャッシュフロー計算書（C/F）の<span className="font-bold text-teal-700">期末現金残高</span>と、貸借対照表(B/S)の<span className="font-bold text-teal-700">現金</span>残高が必ず同じ金額になること</li>
+                    <li>損益計算書（P/L）の<span className="font-bold text-sky-700">当期純利益</span>（今期稼いだお金）が、貸借対照表（B/S）の<span className="font-bold text-sky-700">利益剰余金</span>（会社に貯まったお金）として積み上がる関係</li>
+                    <li>キャッシュフロー計算書（C/F）の<span className="font-bold text-teal-700">期末現金残高</span>と、貸借対照表(B/S)の<span className="font-bold text-teal-700">現金</span>残高が必ず同じ金額になる関係</li>
                   </ul>
                 </div>
               </div>
