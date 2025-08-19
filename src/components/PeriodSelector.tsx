@@ -58,3 +58,4 @@ const PeriodSelector: React.FC<PeriodSelectorProps> = ({ basePath }) => {
 };
 
 export default PeriodSelector;
+

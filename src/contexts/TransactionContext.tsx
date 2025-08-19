@@ -118,6 +118,11 @@ const accountsMaster: Account[] = [
   { id: 24, name: '水道光熱費', type: 'expense', sub_type: 'sga' },
   { id: 11, name: '消耗品費', type: 'expense', sub_type: 'sga' }, // その他経費として利用
   { id: 29, name: '減価償却費', type: 'expense', sub_type: 'sga' },
+  { id: 31, name: '受取利息', type: 'revenue', sub_type: 'non-operating-revenue' },
+  { id: 32, name: '支払利息', type: 'expense', sub_type: 'non-operating-expense' },
+  { id: 33, name: '固定資産売却益', type: 'revenue', sub_type: 'extraordinary-profit' },
+  { id: 34, name: '固定資産売却損', type: 'expense', sub_type: 'extraordinary-loss' },
+  { id: 35, name: '法人税等', type: 'expense', sub_type: 'tax' },
 ];
 
 const transactionTemplates: TransactionTemplate[] = [
@@ -149,6 +154,13 @@ const transactionTemplates: TransactionTemplate[] = [
     // 現金・預金
     { id: 'cash-deposit', label: '現金を預金に預ける', category: '現金・預金', debitAccountId: 19, creditAccountId: 1 },
     { id: 'bank-withdrawal', label: '預金から現金を引き出す', category: '現金・預金', debitAccountId: 1, creditAccountId: 19 },
+
+    // その他
+    { id: 'non-op-rev-interest', label: '受取利息の入金（営業外収益）', category: 'その他', debitAccountId: 1, creditAccountId: 31 },
+    { id: 'non-op-exp-interest', label: '支払利息の支払い（営業外費用）', category: 'その他', debitAccountId: 32, creditAccountId: 1 },
+    { id: 'extra-rev-asset-sale', label: '固定資産売却益の計上（特別利益）', category: 'その他', debitAccountId: 1, creditAccountId: 33 },
+    { id: 'extra-loss-asset-sale', label: '固定資産売却損の計上（特別損失）', category: 'その他', debitAccountId: 34, creditAccountId: 1 },
+    { id: 'tax-payment', label: '法人税等の支払い（法人税等）', category: 'その他', debitAccountId: 35, creditAccountId: 1 },
 ];
 
 
