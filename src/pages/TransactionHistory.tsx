@@ -1,7 +1,30 @@
 import React, { useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { useTransactions } from '../contexts/TransactionContext';
-import type { JournalEntry } from '../types';
+import type { JournalEntry, Account } from '../types';
+
+interface Impact {
+  accountName: string;
+  statement: 'BS' | 'PL';
+  category: string;
+}
+
+const getAccountImpact = (account: Account | undefined): Impact | null => {
+    if (!account) return null;
+
+    let statement: 'BS' | 'PL' = 'BS';
+    let category = '';
+
+    switch (account.type) {
+        case 'asset': category = '資産'; break;
+        case 'liability': category = '負債'; break;
+        case 'equity': category = '純資産'; break;
+        case 'revenue': statement = 'PL'; category = '収益'; break;
+        case 'expense': statement = 'PL'; category = '費用'; break;
+    }
+    return { accountName: account.name, statement, category };
+};
+
 
 const TransactionHistory: React.FC = () => {
   const { transactions, accountsMaster } = useTransactions();
@@ -191,13 +214,30 @@ const TransactionHistory: React.FC = () => {
                                 <tbody className="bg-white divide-y divide-gray-200">
                                   {txs.map(tx => {
                                     const { debitAccount, creditAccount, amount } = getSimpleEntryInfo(tx.entries);
+                                    const debitImpact = getAccountImpact(accountsMaster.find(a => a.id === tx.entries.find(e => e.debitAmount > 0)?.accountId));
+                                    const creditImpact = getAccountImpact(accountsMaster.find(a => a.id === tx.entries.find(e => e.creditAmount > 0)?.accountId));
+                                    const cashAccountIds = [1, 19]; // 現金, 普通預金
+                                    const cfImpact = tx.entries.some(e => cashAccountIds.includes(e.accountId));
+
                                     return (
                                         <React.Fragment key={tx.transactionId}>
-                                            <tr onClick={() => handleRowClick(tx.transactionId)} className="cursor-pointer hover:bg-gray-50">
+                                            <tr 
+                                              onClick={() => handleRowClick(tx.transactionId)} 
+                                              className="cursor-pointer hover:bg-gray-50"
+                                            >
                                                 <td className="px-4 py-4 whitespace-nowrap">{tx.transactionDate}</td>
-                                                <td className="px-4 py-4 break-words">{tx.description}</td>
-                                                <td className="px-4 py-4 whitespace-nowrap">{debitAccount}</td>
-                                                <td className="px-4 py-4 whitespace-nowrap">{creditAccount}</td>
+                                                <td className="px-4 py-4 break-words">
+                                                  {tx.description}
+                                                  {cfImpact && <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800`}>CF</span>}
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap">
+                                                  {debitAccount}
+                                                  {debitImpact && <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${debitImpact.statement === 'BS' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{debitImpact.statement}</span>}
+                                                </td>
+                                                <td className="px-4 py-4 whitespace-nowrap">
+                                                  {creditAccount}
+                                                  {creditImpact && <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${creditImpact.statement === 'BS' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{creditImpact.statement}</span>}
+                                                </td>
                                                 <td className="px-4 py-4 whitespace-nowrap text-right font-mono">{amount.toLocaleString()}</td>
                                                 <td className="px-4 py-4 whitespace-nowrap text-right text-sm font-medium">
                                                     <Link to={`/edit-transaction/${tx.transactionId}`} className="text-accent hover:text-accent-dark">
@@ -213,8 +253,8 @@ const TransactionHistory: React.FC = () => {
                                                             <h4 className="font-bold mb-2 text-accent">仕訳詳細</h4>
                                                             <div className="grid grid-cols-3 gap-x-4 font-mono text-sm">
                                                                 <div className="font-semibold border-b pb-1">勘定科目</div>
-                                                                <div className="font-semibold border-b pb-1 text-right">借方(Dr.)</div>
-                                                                <div className="font-semibold border-b pb-1 text-right">貸方(Cr.)</div>
+                                                                <div className="font-semibold border-b pb-1 text-right">借方</div>
+                                                                <div className="font-semibold border-b pb-1 text-right">貸方</div>
                                                                 {tx.entries.map(entry => (
                                                                     <React.Fragment key={entry.entryId}>
                                                                         <div className="py-1">{getAccountName(entry.accountId)}</div>
@@ -246,12 +286,20 @@ const TransactionHistory: React.FC = () => {
                             <div className="space-y-4 rounded-b-lg border border-t-0 p-2">
                                 {txs.map(tx => {
                                     const { debitAccount, creditAccount} = getSimpleEntryInfo(tx.entries);
+                                    const debitImpact = getAccountImpact(accountsMaster.find(a => a.id === tx.entries.find(e => e.debitAmount > 0)?.accountId));
+                                    const creditImpact = getAccountImpact(accountsMaster.find(a => a.id === tx.entries.find(e => e.creditAmount > 0)?.accountId));
+                                    const cashAccountIds = [1, 19]; // 現金, 普通預金
+                                    const cfImpact = tx.entries.some(e => cashAccountIds.includes(e.accountId));
+                                    
                                     return (
                                         <div key={tx.transactionId} className="bg-gray-50 border border-gray-200 rounded-lg">
                                             <div onClick={() => handleRowClick(tx.transactionId)} className="p-4 cursor-pointer">
                                                 <div className="flex justify-between items-start">
                                                     <div className="flex-grow pr-4">
-                                                        <p className="font-semibold text-gray-800">{tx.description}</p>
+                                                        <p className="font-semibold text-gray-800">
+                                                          {tx.description}
+                                                          {cfImpact && <span className={`ml-2 px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-yellow-100 text-yellow-800`}>CF</span>}
+                                                        </p>
                                                         <p className="text-sm text-gray-500">{tx.transactionDate}</p>
                                                     </div>
                                                     <div className="flex-shrink-0 text-right">
@@ -266,8 +314,8 @@ const TransactionHistory: React.FC = () => {
                                                 </div>
                                                 <div className="mt-2 pt-2 border-t border-gray-200 text-sm text-gray-600">
                                                     <div className="flex justify-between">
-                                                        <span>借方: {debitAccount}</span>
-                                                        <span>貸方: {creditAccount}</span>
+                                                        <span>借方: {debitAccount} {debitImpact && <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${debitImpact.statement === 'BS' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{debitImpact.statement}</span>}</span>
+                                                        <span>貸方: {creditAccount} {creditImpact && <span className={`ml-1 px-1.5 py-0.5 text-xs rounded-full ${creditImpact.statement === 'BS' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'}`}>{creditImpact.statement}</span>}</span>
                                                     </div>
                                                 </div>
                                             </div>
