@@ -65,23 +65,26 @@ const generateSampleTransactions = (periodStartDate: Date): Transaction[] => {
 
     for (let month = startMonth; month <= endMonth; month++) {
       const d = (day: number) => new Date(Date.UTC(year, month, day)).toISOString().split('T')[0];
-      
+      const purchaseAmount = 500000 + month * 10000;
+      const salesAmount = 950000 + month * 15000;
+      const collectionAmount = Math.round(salesAmount * 0.8);
+
       // Add a few transactions for each month
       allTransactions.push(
         {
           transactionId: transactionIdCounter++, userId: 1, transactionDate: d(5),
-          description: `商品を${600000 + month * 10000}円で現金で仕入れた`,
+          description: `商品を${purchaseAmount}円で現金で仕入れた`,
           entries: [
-            { entryId: 1, transactionId: 1, accountId: 8, debitAmount: 600000 + month * 10000, creditAmount: 0 },
-            { entryId: 2, transactionId: 1, accountId: 1, debitAmount: 0, creditAmount: 600000 + month * 10000 },
+            { entryId: 1, transactionId: 1, accountId: 8, debitAmount: purchaseAmount, creditAmount: 0 },
+            { entryId: 2, transactionId: 1, accountId: 1, debitAmount: 0, creditAmount: purchaseAmount },
           ],
         },
         {
           transactionId: transactionIdCounter++, userId: 1, transactionDate: d(15),
-          description: `商品を${950000 + month * 15000}円で売上げ、代金は掛けとした`,
+          description: `商品を${salesAmount}円で売上げ、代金は掛けとした`,
           entries: [
-            { entryId: 3, transactionId: 2, accountId: 2, debitAmount: 950000 + month * 15000, creditAmount: 0 },
-            { entryId: 4, transactionId: 2, accountId: 7, debitAmount: 0, creditAmount: 950000 + month * 15000 },
+            { entryId: 3, transactionId: 2, accountId: 2, debitAmount: salesAmount, creditAmount: 0 },
+            { entryId: 4, transactionId: 2, accountId: 7, debitAmount: 0, creditAmount: salesAmount },
           ],
         },
         {
@@ -90,6 +93,14 @@ const generateSampleTransactions = (periodStartDate: Date): Transaction[] => {
           entries: [
             { entryId: 5, transactionId: 3, accountId: 9, debitAmount: 220000, creditAmount: 0 },
             { entryId: 6, transactionId: 3, accountId: 1, debitAmount: 0, creditAmount: 220000 },
+          ],
+        },
+        {
+          transactionId: transactionIdCounter++, userId: 1, transactionDate: d(28),
+          description: `売掛金${collectionAmount}円を現金で回収した`,
+          entries: [
+            { entryId: 7, transactionId: 4, accountId: 1, debitAmount: collectionAmount, creditAmount: 0 },
+            { entryId: 8, transactionId: 4, accountId: 2, debitAmount: 0, creditAmount: collectionAmount },
           ],
         }
       );

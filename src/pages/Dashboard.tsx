@@ -277,11 +277,12 @@ const Dashboard: React.FC = () => {
               <div className="overflow-hidden">
                 <div className="text-gray-600 bg-gray-50 p-4 border-r border-b border-gray-200 rounded-b-lg">
                   <p className="mb-2">
-                    財務三表は独立しておらず、互いに密接に関連しています。下のカードで、特に重要な2つのつながりをハイライトしています。
+                    財務三表はバラバラではなく、お互いにつながっています。
+                    下のカードで、特に重要な2つのつながりをハイライトしています。
                   </p>
                   <ul className="list-disc list-inside text-sm space-y-1">
-                    <li>損益計算書の<span className="font-bold text-sky-700">当期純利益</span>が、貸借対照表の<span className="font-bold text-sky-700">利益剰余金</span>として純資産に蓄積される関係。</li>
-                    <li>キャッシュフロー計算書の<span className="font-bold text-teal-700">期末現金残高</span>が、貸借対照表の<span className="font-bold text-teal-700">現金</span>残高と一致する関係。</li>
+                    <li>損益計算書（P/L）の<span className="font-bold text-sky-700">当期純利益</span>（今期稼いだお金）が、貸借対照表（B/S）の<span className="font-bold text-sky-700">利益剰余金</span>（会社に貯まったお金）として積み上がること</li>
+                    <li>キャッシュフロー計算書（C/F）の<span className="font-bold text-teal-700">期末現金残高</span>と、貸借対照表(B/S)の<span className="font-bold text-teal-700">現金</span>残高が必ず同じ金額になること</li>
                   </ul>
                 </div>
               </div>
@@ -300,7 +301,7 @@ const Dashboard: React.FC = () => {
                     <div className={`flex justify-between items-center font-bold text-lg p-3 rounded-md transition-colors mt-2 ${isClosed ? 'bg-slate-100' : (isExplanationOpen ? 'bg-sky-50 group-hover:bg-sky-100' : '')}`}>
                         <div className="flex items-center gap-2">
                             {isExplanationOpen && !isClosed && <IconConnectionDot className="text-sky-500" />}
-                            <span>{isClosed ? '期間確定利益:' : '期間純利益:'}</span>
+                            <span>{isClosed ? '期間確定利益:' : '当期純利益:'}</span>
                         </div>
                         <span className={isClosed ? 'text-slate-700' : (isExplanationOpen ? 'text-sky-700' : '')}>
                           {isClosed ? formatCurrency(finalPeriodIncome) : formatCurrency(incomeStatement.当期純利益)}円
@@ -348,7 +349,7 @@ const Dashboard: React.FC = () => {
                         </div>
                         {!isClosed && (
                             <div className="text-right text-sky-700 text-sm font-semibold border-t pt-1 mt-1">
-                                + 期間純利益: {formatCurrency(incomeStatement.当期純利益)}円
+                                + 当期純利益: {formatCurrency(incomeStatement.当期純利益)}円
                                 <hr className="my-1 border-sky-200"/>
                                 = 期末残高: {formatCurrency(balanceSheet.equity.利益剰余金)}円
                             </div>
