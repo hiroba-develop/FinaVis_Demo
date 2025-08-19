@@ -328,7 +328,7 @@ const Dashboard: React.FC = () => {
                             {isExplanationOpen && <IconEquals className="text-teal-600" />}
                             <span>現金:</span>
                         </div>
-                        <span className="font-bold">{cashInBS.toLocaleString()}円</span>
+                        <span className={`font-bold ${isExplanationOpen ? 'text-teal-700' : ''}`}>{cashInBS.toLocaleString()}円</span>
                     </div>
                     <div className="flex justify-between font-semibold"><span>負債:</span><span>{balanceSheet.liabilities.負債合計.toLocaleString()}円</span></div>
                     <div className="font-semibold text-lg pt-2 mt-2 border-t">純資産: {balanceSheet.equity.純資産合計.toLocaleString()}円</div>
