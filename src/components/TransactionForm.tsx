@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTransactions } from '../contexts/TransactionContext';
-import type { Account } from '../types';
 
 interface JournalEntryForm {
   accountId: number | '';
